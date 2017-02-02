@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AzureStorage;
 using Common;
 using Common.Log;
+using Lykke.SlackNotifications;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
@@ -10,12 +11,10 @@ namespace Lykke.Logs
 
     public class LogEntity : TableEntity
     {
-
         public static string GeneratePartitionKey(DateTime dateTime)
         {
             return dateTime.ToString("yyyy-MM-dd");
         }
-
         public DateTime DateTime { get; set; }
         public string Level { get; set; }
         public string Component { get; set; }
@@ -43,14 +42,17 @@ namespace Lykke.Logs
 
     }
 
-    public class LykkeLogSystem : ProducerConsumer<LogEntity>, ILog
+    public class LykkeLogToAzureStorage : ProducerConsumer<LogEntity>, ILog
     {
         private readonly INoSQLTableStorage<LogEntity> _tableStorage;
+        private readonly ISlackNotificationsSender _slackNotificationsSender;
 
-        public LykkeLogSystem(string applicationName, INoSQLTableStorage<LogEntity> tableStorage)
+        public LykkeLogToAzureStorage(string applicationName, INoSQLTableStorage<LogEntity> tableStorage, 
+            ISlackNotificationsSender slackNotificationsSender)
             :base(applicationName, null)
         {
             _tableStorage = tableStorage;
+            _slackNotificationsSender = slackNotificationsSender;
         }
 
         private Task Insert(string level, string component, string process, string context, string type, string stack,
@@ -62,6 +64,10 @@ namespace Lykke.Logs
             return Task.FromResult(0);
         }
 
+        private const string ErrorType = "error";
+        private const string FatalErrorType = "fatalerror";
+
+        private const string WarningType = "warning";
         public Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
             return Insert("info", component, process, context, null, null, info, dateTime);
@@ -69,7 +75,7 @@ namespace Lykke.Logs
 
         public Task WriteWarningAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            return Insert("warning", component, process, context, null, null, info, dateTime);
+            return Insert(WarningType, component, process, context, null, null, info, dateTime);
         }
 
         public Task WriteErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
@@ -79,12 +85,19 @@ namespace Lykke.Logs
 
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
         {
-            return Insert("fatalerror", component, process, context, type.GetType().ToString(), type.StackTrace, type.Message, dateTime);
+            return Insert(FatalErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.Message, dateTime);
         }
 
         protected override async Task Consume(LogEntity item)
         {
             await _tableStorage.InsertAndGenerateRowKeyAsTimeAsync(item, item.DateTime);
+
+            if (item.Level == ErrorType || item.Level == FatalErrorType)
+                await _slackNotificationsSender.SendErrorAsync(item.Component, item.Msg + " : " + item.Stack);
+
+            if (item.Level == WarningType)
+                await _slackNotificationsSender.SendWarningAsync(item.Component, item.Msg);
+
         }
     }
 

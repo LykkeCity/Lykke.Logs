@@ -1,17 +1,15 @@
-﻿{
+{
   "version": "1.0.0-*",
-  "buildOptions": {
-    "emitEntryPoint": true
-  },
 
   "dependencies": {
-    "Lykke.AzureStorage": "1.2.5",
-    "Lykke.Common": "1.1.3",
+    "Lykke.AzureStorage": "1.2.6",
+    "Lykke.Common": "1.1.7",
+    "Lykke.SlackNotifications": "1.0.6",
     "Microsoft.NETCore.App": "1.1.0"
   },
 
   "frameworks": {
-    "netcoreapp1.0": {
+    "netcoreapp1.1": {
       "imports": [ "dnxcore50", "portable-net45+win8" ]
     }
   }
