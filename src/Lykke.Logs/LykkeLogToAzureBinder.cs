@@ -13,7 +13,7 @@ namespace Lykke.Logs
 
     public static class LykkeLogToAzureBinder
     {
-        public static void UseLogToAzureStorage(this IServiceCollection serviceCollection,
+        public static ILog UseLogToAzureStorage(this IServiceCollection serviceCollection,
             ISlackNotificationsSender slackNotificationsSender,
             ILogToAzureSettings settings,
             string tableName = "Logs")
@@ -22,12 +22,14 @@ namespace Lykke.Logs
             var applicationName =
                 Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationName;
 
-            var azureStorage = new LykkeLogToAzureStorage(
+            var result = new LykkeLogToAzureStorage(
                 applicationName,
                 new AzureTableStorage<LogEntity>(settings.LogConnectionString, tableName, null),
                 slackNotificationsSender);
 
-            serviceCollection.AddSingleton<ILog>(azureStorage);
+            serviceCollection.AddSingleton<ILog>(result);
+
+            return result;
 
         }
     }
