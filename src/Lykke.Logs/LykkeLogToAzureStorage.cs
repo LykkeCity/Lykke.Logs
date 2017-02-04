@@ -45,15 +45,22 @@ namespace Lykke.Logs
     public class LykkeLogToAzureStorage : ProducerConsumer<LogEntity>, ILog
     {
         private readonly INoSQLTableStorage<LogEntity> _tableStorage;
-        private readonly ISlackNotificationsSender _slackNotificationsSender;
+        private ISlackNotificationsSender _slackNotificationsSender;
 
         public LykkeLogToAzureStorage(string applicationName, INoSQLTableStorage<LogEntity> tableStorage, 
-            ISlackNotificationsSender slackNotificationsSender)
+            ISlackNotificationsSender slackNotificationsSender = null)
             :base(applicationName, null)
         {
             _tableStorage = tableStorage;
             _slackNotificationsSender = slackNotificationsSender;
         }
+
+        public LykkeLogToAzureStorage SetSlackNotification(ISlackNotificationsSender slackNotificationsSender)
+        {
+            _slackNotificationsSender = slackNotificationsSender;
+            return this;
+        }
+
 
         private Task Insert(string level, string component, string process, string context, string type, string stack,
             string msg, DateTime? dateTime)
