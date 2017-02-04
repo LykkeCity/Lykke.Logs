@@ -14,8 +14,8 @@ namespace Lykke.Logs
     public static class LykkeLogToAzureBinder
     {
         public static LykkeLogToAzureStorage UseLogToAzureStorage(this IServiceCollection serviceCollection,
-            ISlackNotificationsSender slackNotificationsSender,
-            ILogToAzureSettings settings,
+            ILogToAzureSettings settings, 
+            ISlackNotificationsSender slackNotificationsSender = null,
             string tableName = "Logs")
         {
 
