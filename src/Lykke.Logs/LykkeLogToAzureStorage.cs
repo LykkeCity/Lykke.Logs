@@ -99,11 +99,14 @@ namespace Lykke.Logs
         {
             await _tableStorage.InsertAndGenerateRowKeyAsTimeAsync(item, item.DateTime);
 
-            if (item.Level == ErrorType || item.Level == FatalErrorType)
-                await _slackNotificationsSender.SendErrorAsync(item.Component, item.Msg + " : " + item.Stack);
+            if (_slackNotificationsSender != null)
+            {
+                if (item.Level == ErrorType || item.Level == FatalErrorType)
+                    await _slackNotificationsSender.SendErrorAsync(item.Component, item.Msg + " : " + item.Stack);
 
-            if (item.Level == WarningType)
-                await _slackNotificationsSender.SendWarningAsync(item.Component, item.Msg);
+                if (item.Level == WarningType)
+                    await _slackNotificationsSender.SendWarningAsync(item.Component, item.Msg);
+            }
 
         }
     }
