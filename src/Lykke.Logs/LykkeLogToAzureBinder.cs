@@ -6,15 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lykke.Logs
 {
 
-    public interface ILogToAzureSettings
-    {
-        string LogConnectionString { get; set; }
-    }
-
     public static class LykkeLogToAzureBinder
     {
         public static LykkeLogToAzureStorage UseLogToAzureStorage(this IServiceCollection serviceCollection,
-            ILogToAzureSettings settings, 
+            string  connectionString, 
             ISlackNotificationsSender slackNotificationsSender = null,
             string tableName = "Logs")
         {
@@ -24,7 +19,7 @@ namespace Lykke.Logs
 
             var result = new LykkeLogToAzureStorage(
                 applicationName,
-                new AzureTableStorage<LogEntity>(settings.LogConnectionString, tableName, null),
+                new AzureTableStorage<LogEntity>(connectionString, tableName, null),
                 slackNotificationsSender);
 
             serviceCollection.AddSingleton<ILog>(result);
