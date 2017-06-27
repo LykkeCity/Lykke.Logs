@@ -87,12 +87,12 @@ namespace Lykke.Logs
 
         public Task WriteErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
         {
-            return Insert("error", component, process, context, type.GetType().ToString(), type.StackTrace, type.Message, dateTime);
+            return Insert("error", component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
         }
 
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
         {
-            return Insert(FatalErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.Message, dateTime);
+            return Insert(FatalErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
         }
 
         protected override async Task Consume(LogEntity item)
