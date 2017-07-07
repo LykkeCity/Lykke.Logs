@@ -8,13 +8,13 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
 {
-
     public class LogEntity : TableEntity
     {
         public static string GeneratePartitionKey(DateTime dateTime)
         {
             return dateTime.ToString("yyyy-MM-dd");
         }
+
         public DateTime DateTime { get; set; }
         public string Level { get; set; }
         public string Component { get; set; }
@@ -24,7 +24,15 @@ namespace Lykke.Logs
         public string Stack { get; set; }
         public string Msg { get; set; }
 
-        public static LogEntity Create(string level, string component, string process, string context, string type, string stack, string msg, DateTime dateTime)
+        public static LogEntity Create(
+            string level,
+            string component,
+            string process,
+            string context,
+            string type,
+            string stack,
+            string msg,
+            DateTime dateTime)
         {
             return new LogEntity
             {
@@ -39,7 +47,6 @@ namespace Lykke.Logs
                 Msg = msg
             };
         }
-
     }
 
     public class LykkeLogToAzureStorage : ProducerConsumer<LogEntity>, ILog
@@ -73,8 +80,8 @@ namespace Lykke.Logs
 
         private const string ErrorType = "error";
         private const string FatalErrorType = "fatalerror";
-
         private const string WarningType = "warning";
+
         public Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
             return Insert("info", component, process, context, null, null, info, dateTime);
@@ -87,7 +94,7 @@ namespace Lykke.Logs
 
         public Task WriteErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
         {
-            return Insert("error", component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
+            return Insert(ErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
         }
 
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
@@ -102,13 +109,15 @@ namespace Lykke.Logs
             if (_slackNotificationsSender != null)
             {
                 if (item.Level == ErrorType || item.Level == FatalErrorType)
-                    await _slackNotificationsSender.SendErrorAsync(item.Component +" : " + item.Msg + " : " + item.Stack);
+                    await _slackNotificationsSender.SendErrorAsync(
+                        (_componentName == item.Component ? _componentName : _componentName + ":" + item.Component)
+                        + " : " + item.Msg + " : " + item.Stack);
 
                 if (item.Level == WarningType)
-                    await _slackNotificationsSender.SendWarningAsync(item.Component + " : " + item.Msg);
+                    await _slackNotificationsSender.SendWarningAsync(
+                        (_componentName == item.Component ? _componentName : _componentName + ":" + item.Component)
+                        + " : " + item.Msg);
             }
-
         }
     }
-
 }

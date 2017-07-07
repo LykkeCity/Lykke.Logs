@@ -2,8 +2,8 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "Lykke.AzureStorage": "1.2.6",
-    "Lykke.Common": "1.1.21",
+    "Lykke.AzureStorage": "1.2.24",
+    "Lykke.Common": "1.1.79",
     "Lykke.SlackNotifications": "1.0.10",
     "Microsoft.NETCore.App": "1.1.0"
   },
