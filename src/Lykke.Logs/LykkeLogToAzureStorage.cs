@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using AzureStorage;
 using Common;
@@ -92,16 +93,16 @@ namespace Lykke.Logs
             return Insert(WarningType, component, process, context, null, null, info, dateTime);
         }
 
-        public Task WriteErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
+        public Task WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            return Insert(ErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
+            return Insert(ErrorType, component, process, context, exception.GetType().ToString(), exception.ToString(), GetExceptionMessage(exception), dateTime);
         }
 
-        public Task WriteFatalErrorAsync(string component, string process, string context, Exception type, DateTime? dateTime = null)
+        public Task WriteFatalErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            return Insert(FatalErrorType, component, process, context, type.GetType().ToString(), type.StackTrace, type.GetBaseException().Message, dateTime);
+            return Insert(FatalErrorType, component, process, context, exception.GetType().ToString(), exception.ToString(), GetExceptionMessage(exception), dateTime);
         }
-
+        
         protected override async Task Consume(LogEntity item)
         {
             await _tableStorage.InsertAndGenerateRowKeyAsTimeAsync(item, item.DateTime);
@@ -117,6 +118,26 @@ namespace Lykke.Logs
                     await _slackNotificationsSender.SendWarningAsync(
                         (_componentName == item.Component ? _componentName : _componentName + ":" + item.Component)
                         + " : " + item.Msg);
+            }
+        }
+
+        public string GetExceptionMessage(Exception exception)
+        {
+            var ex = exception;
+            var sb = new StringBuilder();
+
+            while (true)
+            {
+                sb.AppendLine(ex.Message);
+
+                ex = ex.InnerException;
+
+                if (ex == null)
+                {
+                    return sb.ToString();
+                }
+
+                sb.Append(" -> ");
             }
         }
     }
