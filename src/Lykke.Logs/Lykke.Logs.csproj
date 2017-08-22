@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <Authors>Lykke</Authors>
+    <Company>Lykke</Company>
+    <Description />
+    <Copyright>Lykke 2017</Copyright>
+    <PackageProjectUrl>https://github.com/LykkeCity/Lykke.Logs</PackageProjectUrl>
+    <PackageIconUrl>https://avatars3.githubusercontent.com/u/14153330?v=3&amp;s=200</PackageIconUrl>
+    <RepositoryUrl>https://github.com/LykkeCity/Lykke.Logs.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Lykke</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lykke.AzureStorage" Version="1.2.35" />
+    <PackageReference Include="Lykke.Common" Version="1.1.81" />
+    <PackageReference Include="Lykke.SlackNotifications" Version="1.0.11" />
+  </ItemGroup>
+
+</Project>
