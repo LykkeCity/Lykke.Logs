@@ -11,9 +11,7 @@ namespace Lykke.Logs
 {
     public class LykkeLogToAzureStorage : 
         TimerPeriod,
-        ILog,
-        IStopable,
-        IDisposable
+        ILog
     {
         public const string ErrorType = "error";
         public const string FatalErrorType = "fatalerror";
@@ -75,9 +73,9 @@ namespace Lykke.Logs
             base.Start();
         }
 
-        void IStopable.Stop()
+        public override void Stop()
         {
-            Stop();
+            base.Stop();
 
             if (_ownPersistenceManager)
             {
@@ -87,11 +85,6 @@ namespace Lykke.Logs
             {
                 (_slackNotificationsManager as IStopable)?.Stop();
             }
-        }
-
-        public void Dispose()
-        {
-            ((IStopable)this).Stop();
         }
 
         public LykkeLogToAzureStorage SetSlackNotificationsManager(ILykkeLogToAzureSlackNotificationsManager notificationsManager)
