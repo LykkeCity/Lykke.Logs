@@ -9,7 +9,7 @@ namespace Lykke.Logs.Tests
     public class LykkeLogToAzureStorageTests
     {
         private readonly Mock<ILykkeLogToAzureStoragePersistenceManager> _persistenceManagerMock;
-        private Mock<ILykkeLogToAzureSlackNotificationsManager> _slackNotificationsManagerMock;
+        private readonly Mock<ILykkeLogToAzureSlackNotificationsManager> _slackNotificationsManagerMock;
 
         public LykkeLogToAzureStorageTests()
         {
@@ -35,6 +35,8 @@ namespace Lykke.Logs.Tests
 
             // Assert
             _persistenceManagerMock.Verify(m => m.Persist(It.IsAny<IReadOnlyCollection<LogEntity>>()), Times.Never);
+
+            log.Dispose();
         }
 
         [Fact]
@@ -56,6 +58,8 @@ namespace Lykke.Logs.Tests
             // Assert
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count < 10)), Times.Never);
+
+            log.Dispose();
         }
 
         [Fact]
@@ -77,6 +81,8 @@ namespace Lykke.Logs.Tests
             // Assert
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 15)), Times.Once);
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 15)), Times.Never);
+
+            log.Dispose();
         }
 
         [Fact]
@@ -106,6 +112,8 @@ namespace Lykke.Logs.Tests
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 5)), Times.Once);
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count < 10)), Times.Never);
+
+            log.Dispose();
         }
 
         [Fact]
@@ -128,6 +136,8 @@ namespace Lykke.Logs.Tests
 
             // Assert
             _slackNotificationsManagerMock.Verify(m => m.SendNotification(It.IsAny<LogEntity>()), Times.Exactly(15));
+
+            log.Dispose();
         }
     }
 }
