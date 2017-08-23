@@ -11,7 +11,8 @@ namespace Lykke.Logs
 {
     public class LykkeLogToAzureStoragePersistenceManager : 
         ProducerConsumer<IEnumerable<LogEntity>>,
-        ILykkeLogToAzureStoragePersistenceManager
+        ILykkeLogToAzureStoragePersistenceManager,
+        IDisposable
     {
         private readonly INoSQLTableStorage<LogEntity> _tableStorage;
 
@@ -27,6 +28,11 @@ namespace Lykke.Logs
         public void Persist(IEnumerable<LogEntity> entries)
         {
             Produce(entries);
+        }
+
+        public void Dispose()
+        {
+            Stop();
         }
 
         protected override async Task Consume(IEnumerable<LogEntity> entries)

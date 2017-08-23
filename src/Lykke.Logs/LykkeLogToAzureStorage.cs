@@ -10,9 +10,10 @@ using Lykke.AzureStorage;
 namespace Lykke.Logs
 {
     public class LykkeLogToAzureStorage : 
-        TimerPeriod, 
+        TimerPeriod,
         ILog,
-        IStopable
+        IStopable,
+        IDisposable
     {
         public const string ErrorType = "error";
         public const string FatalErrorType = "fatalerror";
@@ -21,11 +22,13 @@ namespace Lykke.Logs
         private readonly ILykkeLogToAzureStoragePersistenceManager _persistenceManager;
         private ILykkeLogToAzureSlackNotificationsManager _slackNotificationsManager;
         private readonly TimeSpan _maxBatchLifetime;
-        private readonly int _maxBatchSize;
+        private readonly int _batchSizeThreshold;
         private readonly bool _ownPersistenceManager;
         private readonly bool _ownSlackNotificationsManager;
 
         private List<LogEntity> _currentBatch;
+        private volatile int _currentBatchSize;
+        private int _maxBatchSize;
         private DateTime _currentBatchDeathtime;
 
         /// <param name="applicationName">Application name</param>
@@ -33,7 +36,7 @@ namespace Lykke.Logs
         /// <param name="slackNotificationsManager">Slack notifications manager. Can be null</param>
         /// <param name="lastResortLog">Last resort log (e.g. Console), which will be used to log logging infrastructure's issues</param>
         /// <param name="maxBatchLifetime">Log entries batch's lifetime, when exceeded, batch will be saved, and new batch will be started. Default is 5 seconds</param>
-        /// <param name="maxBatchSize">Log messages batch's max size, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
+        /// <param name="batchSizeThreshold">Log messages batch's size threshold, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
         /// <param name="ownPersistenceManager">Is log instance owns persistence manager: should it manages Start/Stop</param>
         /// <param name="ownSlackNotificationsManager">Is log instance owns slack notifications manager: should it manages Start/Stop</param>
         public LykkeLogToAzureStorage(
@@ -42,7 +45,7 @@ namespace Lykke.Logs
             ILykkeLogToAzureSlackNotificationsManager slackNotificationsManager = null,
             ILog lastResortLog = null,
             TimeSpan? maxBatchLifetime = null,
-            int maxBatchSize = 100,
+            int batchSizeThreshold = 100,
             bool ownPersistenceManager = true,
             bool ownSlackNotificationsManager = true) :
 
@@ -50,7 +53,7 @@ namespace Lykke.Logs
         {
             _persistenceManager = persistenceManager;
             _slackNotificationsManager = slackNotificationsManager;
-            _maxBatchSize = maxBatchSize;
+            _batchSizeThreshold = batchSizeThreshold;
             _ownPersistenceManager = ownPersistenceManager;
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
@@ -84,6 +87,11 @@ namespace Lykke.Logs
             {
                 (_slackNotificationsManager as IStopable)?.Stop();
             }
+        }
+
+        public void Dispose()
+        {
+            ((IStopable)this).Stop();
         }
 
         public LykkeLogToAzureStorage SetSlackNotificationsManager(ILykkeLogToAzureSlackNotificationsManager notificationsManager)
@@ -125,18 +133,18 @@ namespace Lykke.Logs
 
             var now = DateTime.UtcNow;
 
-            if (now >= _currentBatchDeathtime)
+            if (_currentBatchSize >= _batchSizeThreshold || _currentBatchSize > 0 && now >= _currentBatchDeathtime)
             {
                 lock (_currentBatch)
                 {
-                    if (now >= _currentBatchDeathtime && _currentBatch.Count > 0)
+                    if (_currentBatchSize >= _batchSizeThreshold || _currentBatchSize > 0 && now >= _currentBatchDeathtime)
                     {
                         batchToSave = _currentBatch;
                         StartNewBatch();
                     }
                 }
             }
-            
+
             if (batchToSave != null)
             {
                 _persistenceManager.Persist(batchToSave);
@@ -151,22 +159,10 @@ namespace Lykke.Logs
             var dt = dateTime ?? DateTime.UtcNow;
             var newEntity = LogEntity.Create(level, component, process, context, type, stack, msg, dt);
 
-            IReadOnlyCollection<LogEntity> batchToSave = null;
-
             lock (_currentBatch)
             {
                 _currentBatch.Add(newEntity);
-
-                if (_currentBatch.Count >= _maxBatchSize)
-                {
-                    batchToSave = _currentBatch;
-                    StartNewBatch();
-                }
-            }
-
-            if (batchToSave != null)
-            {
-                _persistenceManager.Persist(batchToSave);
+                ++_currentBatchSize;
             }
 
             _slackNotificationsManager?.SendNotification(newEntity);
@@ -176,7 +172,9 @@ namespace Lykke.Logs
 
         private void StartNewBatch()
         {
+            _maxBatchSize = Math.Max(_maxBatchSize, _currentBatchSize);
             _currentBatch = new List<LogEntity>(_maxBatchSize);
+            _currentBatchSize = 0;
             _currentBatchDeathtime = DateTime.UtcNow + _maxBatchLifetime;
         }
 

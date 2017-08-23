@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
@@ -7,7 +8,8 @@ namespace Lykke.Logs
 {
     public class LykkeLogToAzureSlackNotificationsManager : 
         ProducerConsumer<LogEntity>,
-        ILykkeLogToAzureSlackNotificationsManager
+        ILykkeLogToAzureSlackNotificationsManager,
+        IDisposable
     {
         private readonly ISlackNotificationsSender _slackNotificationsSender;
 
@@ -20,6 +22,11 @@ namespace Lykke.Logs
         public void SendNotification(LogEntity entry)
         {
             Produce(entry);
+        }
+
+        public void Dispose()
+        {
+            Stop();
         }
 
         protected override async Task Consume(LogEntity entry)

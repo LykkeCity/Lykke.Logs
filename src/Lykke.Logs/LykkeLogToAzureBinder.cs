@@ -14,14 +14,14 @@ namespace Lykke.Logs
         /// <param name="tableName">Log's table name. Default is "Logs"</param>
         /// <param name="lastResortLog">Last resort log (e.g. Console), which will be used to log logging infrastructure's issues</param>
         /// <param name="maxBatchLifetime">Log entries batch's lifetime, when exceeded, batch will be saved, and new batch will be started. Default is 5 seconds</param>
-        /// <param name="maxBatchSize">Log messages batch's max size, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
+        /// <param name="batchSizeThreshold">Log messages batch's size threshold, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
         public static LykkeLogToAzureStorage UseLogToAzureStorage(this IServiceCollection serviceCollection,
             string connectionString,
             ISlackNotificationsSender slackNotificationsSender = null,
             string tableName = "Logs",
             ILog lastResortLog = null,
             TimeSpan? maxBatchLifetime = null,
-            int maxBatchSize = 100)
+            int batchSizeThreshold = 100)
         {
 
             return UseLogToAzureStorage(serviceCollection, () => connectionString, slackNotificationsSender, tableName, lastResortLog);
@@ -33,14 +33,14 @@ namespace Lykke.Logs
         /// <param name="tableName">Log's table name. Default is "Logs"</param>
         /// <param name="lastResortLog">Last resort log (e.g. Console), which will be used to log logging infrastructure's issues</param>
         /// <param name="maxBatchLifetime">Log entries batch's lifetime, when exceeded, batch will be saved, and new batch will be started. Default is 5 seconds</param>
-        /// <param name="maxBatchSize">Log messages batch's max size, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
+        /// <param name="batchSizeThreshold">Log messages batch's max size, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
         public static LykkeLogToAzureStorage UseLogToAzureStorage(this IServiceCollection serviceCollection,
             Func<string> getConnectionString,
             ISlackNotificationsSender slackNotificationsSender = null,
             string tableName = "Logs",
             ILog lastResortLog = null,
             TimeSpan? maxBatchLifetime = null,
-            int maxBatchSize = 100)
+            int batchSizeThreshold = 100)
         {
             var applicationName = Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationName;
 
@@ -59,7 +59,7 @@ namespace Lykke.Logs
                 slackNotificationsManager,
                 lastResortLog,
                 maxBatchLifetime,
-                maxBatchSize,
+                batchSizeThreshold,
                 ownPersistenceManager: true,
                 ownSlackNotificationsManager: true);
 

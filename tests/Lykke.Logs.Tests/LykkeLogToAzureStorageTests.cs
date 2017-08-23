@@ -21,7 +21,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_not_saved_when_lifetime_and_size_is_not_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), maxBatchSize: 100);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 100);
 
             log.Start();
 
@@ -41,7 +41,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_saved_when_size_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), maxBatchSize: 10);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 10);
 
             log.Start();
 
@@ -51,16 +51,18 @@ namespace Lykke.Logs.Tests
                 log.WriteInfoAsync("Test", "", "", "");
             }
 
+            Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
+
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 10)), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count < 10)), Times.Never);
         }
 
         [Fact]
         public void Test_that_batch_is_saved_when_lifetime_is_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), maxBatchSize: 100);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 100);
 
             log.Start();
 
@@ -81,7 +83,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_saved_when_lifetime_is_exceeded_and_then_when_size_is_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), maxBatchSize: 10);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 10);
 
             log.Start();
 
@@ -98,10 +100,12 @@ namespace Lykke.Logs.Tests
                 log.WriteInfoAsync("Test", "", "", "");
             }
 
+            Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
+            
             // Assert
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 5)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count != 10)), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count < 10)), Times.Never);
         }
 
         [Fact]
@@ -110,7 +114,7 @@ namespace Lykke.Logs.Tests
             // Arrange
             var log = new LykkeLogToAzureStorage("Tests", 
                 _persistenceManagerMock.Object, _slackNotificationsManagerMock.Object,
-                maxBatchLifetime: TimeSpan.FromSeconds(100), maxBatchSize: 100);
+                maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 100);
 
             log.Start();
 
