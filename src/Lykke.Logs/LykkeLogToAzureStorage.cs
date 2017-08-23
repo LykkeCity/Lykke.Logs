@@ -54,13 +54,13 @@ namespace Lykke.Logs
             _batchSizeThreshold = batchSizeThreshold;
             _ownPersistenceManager = ownPersistenceManager;
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
-            _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
-
-            StartNewBatch();
+            _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);          
         }
 
         public override void Start()
         {
+            StartNewBatch();
+
             if (_ownPersistenceManager)
             {
                 (_persistenceManager as IStartable)?.Start();
@@ -75,6 +75,12 @@ namespace Lykke.Logs
 
         public override void Stop()
         {
+            lock (_currentBatch)
+            {
+                _persistenceManager.Persist(_currentBatch);
+                _currentBatch = null;
+            }
+
             base.Stop();
 
             if (_ownPersistenceManager)
@@ -122,6 +128,11 @@ namespace Lykke.Logs
 
         public override Task Execute()
         {
+            if (_currentBatch == null)
+            {
+                return Task.CompletedTask;
+            }
+
             IReadOnlyCollection<LogEntity> batchToSave = null;
 
             var now = DateTime.UtcNow;
@@ -149,6 +160,11 @@ namespace Lykke.Logs
         private Task Insert(string level, string component, string process, string context, string type, string stack,
             string msg, DateTime? dateTime)
         {
+            if (_currentBatch == null)
+            {
+                return Task.CompletedTask;
+            }
+
             var dt = dateTime ?? DateTime.UtcNow;
             var newEntity = LogEntity.Create(level, component, process, context, type, stack, msg, dt);
 
