@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{77640007-4B79-48CD-869F-2369D65C84A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Logs", "src\Lykke.Logs\Lykke.Logs.csproj", "{2C78614F-55C4-434F-A652-437946343997}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BD15EBC5-DC1A-4A8F-A022-303396B8A608}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9CF7F532-A6E2-4559-98F3-0D3A1271EEE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Logs", "src\Lykke.Logs\Lykke.Logs.csproj", "{2C78614F-55C4-434F-A652-437946343997}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Logs.Tests", "tests\Lykke.Logs.Tests\Lykke.Logs.Tests.csproj", "{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,12 +19,16 @@ Global
 		{2C78614F-55C4-434F-A652-437946343997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C78614F-55C4-434F-A652-437946343997}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C78614F-55C4-434F-A652-437946343997}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{2C78614F-55C4-434F-A652-437946343997} = {77640007-4B79-48CD-869F-2369D65C84A1}
+		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21} = {9CF7F532-A6E2-4559-98F3-0D3A1271EEE9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C5257CB6-DABE-42A7-8D99-762B0668F949}
