@@ -76,7 +76,7 @@ namespace Lykke.Logs.Tests
                 log.WriteInfoAsync("Test", "", "", "");
             }
 
-            Task.Delay(TimeSpan.FromSeconds(1.5)).Wait();
+            Task.Delay(TimeSpan.FromSeconds(5)).Wait();
 
             // Assert
             _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 15)), Times.Once);
