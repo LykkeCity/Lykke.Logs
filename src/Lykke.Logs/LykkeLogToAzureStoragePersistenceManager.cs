@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AzureStorage;
 using Common;
@@ -14,14 +15,17 @@ namespace Lykke.Logs
         ILykkeLogToAzureStoragePersistenceManager
     {
         private readonly INoSQLTableStorage<LogEntity> _tableStorage;
+        private readonly int _maxRetriesCount;
 
         public LykkeLogToAzureStoragePersistenceManager(
             string componentName,
             INoSQLTableStorage<LogEntity> tableStorage,
-            ILog lastResortLog = null) :
+            ILog lastResortLog = null,
+            int maxRetriesCount = 10) :
             base(componentName, lastResortLog)
         {
             _tableStorage = tableStorage;
+            _maxRetriesCount = maxRetriesCount;
         }
 
         public void Persist(IEnumerable<LogEntity> entries)
@@ -40,7 +44,7 @@ namespace Lykke.Logs
         private async Task SavePartitionGroupAsync(IReadOnlyList<LogEntity> group)
         {
             var retryNumber = 0;
-
+            
             while (true)
             {
                 try
@@ -49,27 +53,37 @@ namespace Lykke.Logs
                     return;
                 }
                 catch (AggregateException ex)
-                    when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode == 409)
+                    when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode ==
+                          (int) HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
+                {
+                    IncrementRowKeys(group, retryNumber);
+                }
+                catch (StorageException ex)
+                    when (ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
+                {
+                    IncrementRowKeys(group, retryNumber);
+                }
+                catch (AggregateException ex)
+                    when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode !=
+                          (int) HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
                 {
                 }
                 catch (StorageException ex)
-                    when (ex.RequestInformation.HttpStatusCode == 409)
+                    when (ex.RequestInformation.HttpStatusCode != (int) HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
                 {
                 }
 
                 ++retryNumber;
+            }
+        }
 
-                for (var itemNumber = 0; itemNumber < group.Count; ++itemNumber)
-                {
-                    var entry = group[itemNumber];
+        private static void IncrementRowKeys(IReadOnlyList<LogEntity> group, int retryNumber)
+        {
+            for (var itemNumber = 0; itemNumber < @group.Count; ++itemNumber)
+            {
+                var entry = group[itemNumber];
 
-                    entry.RowKey = LogEntity.GenerateRowKey(entry.DateTime, retryNumber, itemNumber);
-                }
-
-                if (retryNumber > 999)
-                {
-                    throw new InvalidOperationException("Couldn't save entries to log");
-                }
+                entry.RowKey = LogEntity.GenerateRowKey(entry.DateTime, retryNumber, itemNumber);
             }
         }
     }
