@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-
 namespace Lykke.Logs
 {
-    public interface ILykkeLogToAzureStoragePersistenceManager
+    public interface ILykkeLogToAzureStoragePersistenceManager : ILogPersistenceManager<LogEntity>
     {
-        void Persist(IEnumerable<LogEntity> entries);
     }
 }
