@@ -19,6 +19,7 @@ namespace Lykke.Logs
 
         private readonly ILykkeLogToAzureStoragePersistenceManager _persistenceManager;
         private ILykkeLogToAzureSlackNotificationsManager _slackNotificationsManager;
+        private readonly ILog _lastResortLog;
         private readonly TimeSpan _maxBatchLifetime;
         private readonly int _batchSizeThreshold;
         private readonly bool _ownPersistenceManager;
@@ -51,10 +52,13 @@ namespace Lykke.Logs
         {
             _persistenceManager = persistenceManager;
             _slackNotificationsManager = slackNotificationsManager;
+            _lastResortLog = lastResortLog;
             _batchSizeThreshold = batchSizeThreshold;
             _ownPersistenceManager = ownPersistenceManager;
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
-            _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);          
+            _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
+
+            StartNewBatch();
         }
 
         public override void Start()
@@ -75,10 +79,13 @@ namespace Lykke.Logs
 
         public override void Stop()
         {
-            lock (_currentBatch)
+            if (_currentBatch != null)
             {
-                _persistenceManager.Persist(_currentBatch);
-                _currentBatch = null;
+                lock (_currentBatch)
+                {
+                    _persistenceManager.Persist(_currentBatch);
+                    _currentBatch = null;
+                }
             }
 
             base.Stop();
@@ -160,21 +167,31 @@ namespace Lykke.Logs
         private Task Insert(string level, string component, string process, string context, string type, string stack,
             string msg, DateTime? dateTime)
         {
-            if (_currentBatch == null)
+            try
             {
-                return Task.CompletedTask;
+                if (_currentBatch == null)
+                {
+                    return Task.CompletedTask;
+                }
+
+                var dt = dateTime ?? DateTime.UtcNow;
+                var newEntity = LogEntity.Create(level, component, process, context, type, stack, msg, dt);
+
+                lock (_currentBatch)
+                {
+                    _currentBatch.Add(newEntity);
+                    ++_currentBatchSize;
+                }
+
+                _slackNotificationsManager?.SendNotification(newEntity);
             }
-
-            var dt = dateTime ?? DateTime.UtcNow;
-            var newEntity = LogEntity.Create(level, component, process, context, type, stack, msg, dt);
-
-            lock (_currentBatch)
+            catch (Exception ex)
             {
-                _currentBatch.Add(newEntity);
-                ++_currentBatchSize;
+                if (_lastResortLog != null)
+                {
+                    return _lastResortLog.WriteErrorAsync(nameof(LykkeLogToAzureStorage), nameof(Insert), "", ex);
+                }
             }
-
-            _slackNotificationsManager?.SendNotification(newEntity);
 
             return Task.CompletedTask;
         }
