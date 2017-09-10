@@ -14,7 +14,7 @@ namespace Lykke.Logs
         public string Stack { get; set; }
         public string Msg { get; set; }
 
-        public static LogEntity Create(
+        public static LogEntity CreateWithoutRowKey(
             string level,
             string component,
             string process,
@@ -27,7 +27,6 @@ namespace Lykke.Logs
             return new LogEntity
             {
                 PartitionKey = GeneratePartitionKey(dateTime),
-                RowKey = GenerateRowKey(dateTime),
                 DateTime = dateTime,
                 Level = level,
                 Component = component,
@@ -44,14 +43,11 @@ namespace Lykke.Logs
             return dateTime.ToString("yyyy-MM-dd");
         }
 
-        public static string GenerateRowKey(DateTime dateTime)
+        public static string GenerateRowKey(DateTime dateTime, int itemNumber, int retryNumber)
         {
-            return dateTime.ToString("HH:mm:ss.fffffff");
-        }
-
-        internal static string GenerateRowKey(DateTime dateTime, int retryNumber,  int itemNumber)
-        {
-            return $"{dateTime:HH:mm:ss.fffffff}.{retryNumber:000}.{itemNumber:00}";
+            return retryNumber == 0 
+                ? $"{dateTime:HH:mm:ss.fffffff}.{itemNumber:000}" 
+                : $"{dateTime:HH:mm:ss.fffffff}.{itemNumber:000}.{retryNumber:000}";
         }
     }
 }

@@ -175,7 +175,7 @@ namespace Lykke.Logs
                 }
 
                 var dt = dateTime ?? DateTime.UtcNow;
-                var newEntity = LogEntity.Create(level, component, process, context, type, stack, msg, dt);
+                var newEntity = LogEntity.CreateWithoutRowKey(level, component, process, context, type, stack, msg, dt);
 
                 lock (_currentBatch)
                 {

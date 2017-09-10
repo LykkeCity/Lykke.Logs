@@ -51,8 +51,12 @@ namespace Lykke.Logs
         {
             var retryNumber = 0;
 
+            UpdateRowKeys(group, retryNumber);
+
             while (true)
             {
+                ++retryNumber;
+
                 try
                 {
                     await _tableStorage.InsertAsync(group);
@@ -60,30 +64,28 @@ namespace Lykke.Logs
                 }
                 catch (AggregateException ex)
                     when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode ==
-                          (int)HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
+                          (int)HttpStatusCode.Conflict && retryNumber <= _maxRetriesCount)
                 {
-                    IncrementRowKeys(group, retryNumber);
+                    UpdateRowKeys(group, retryNumber);
                 }
                 catch (StorageException ex)
-                    when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
+                    when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict && retryNumber <= _maxRetriesCount)
                 {
-                    IncrementRowKeys(group, retryNumber);
+                    UpdateRowKeys(group, retryNumber);
                 }
                 catch (AggregateException ex)
                     when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode !=
-                          (int)HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
+                          (int)HttpStatusCode.BadRequest && retryNumber <= _maxRetriesCount)
                 {
                 }
                 catch (StorageException ex)
-                    when (ex.RequestInformation.HttpStatusCode != (int)HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
+                    when (ex.RequestInformation.HttpStatusCode != (int)HttpStatusCode.BadRequest && retryNumber <= _maxRetriesCount)
                 {
                 }
-
-                ++retryNumber;
             }
         }
 
-        private void IncrementRowKeys(IReadOnlyList<TLogEntity> group, int retryNumber)
+        private void UpdateRowKeys(IReadOnlyList<TLogEntity> group, int retryNumber)
         {
             for (var itemNumber = 0; itemNumber < group.Count; ++itemNumber)
             {

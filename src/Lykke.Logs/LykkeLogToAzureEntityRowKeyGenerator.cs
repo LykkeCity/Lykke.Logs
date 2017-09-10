@@ -4,7 +4,7 @@ namespace Lykke.Logs
     {
         public string Generate(LogEntity entity, int retryNum, int batchItemNum)
         {
-            return LogEntity.GenerateRowKey(entity.DateTime, retryNum, batchItemNum);
+            return LogEntity.GenerateRowKey(entity.DateTime, batchItemNum, retryNum);
         }
     }
 }
