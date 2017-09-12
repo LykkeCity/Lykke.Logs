@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using AzureStorage;
+using AzureStorage.Tables.Decorators;
 using Common;
 using Common.Log;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
@@ -19,19 +18,29 @@ namespace Lykke.Logs
     {
         private readonly INoSQLTableStorage<TLogEntity> _tableStorage;
         private readonly ILogEntityRowKeyGenerator<TLogEntity> _rowKeyGenerator;
-        private readonly int _maxRetriesCount;
 
+        /// <param name="componentName"></param>
+        /// <param name="tableStorage"></param>
+        /// <param name="rowKeyGenerator"></param>
+        /// <param name="lastResortLog"></param>
+        /// <param name="maxRetriesCount">Max count of retries on insert failure</param>
+        /// <param name="retryDelay">Gap between retries on insert failure. Default value is 5 seconds</param>
         public LogPersistenceManager(
             string componentName,
             INoSQLTableStorage<TLogEntity> tableStorage,
             ILogEntityRowKeyGenerator<TLogEntity> rowKeyGenerator,
             ILog lastResortLog = null,
-            int maxRetriesCount = 10) :
+            int maxRetriesCount = 10,
+            TimeSpan? retryDelay = null) :
+
             base(componentName, lastResortLog)
         {
-            _tableStorage = tableStorage;
+            _tableStorage = new RetryOnFailureAzureTableStorageDecorator<TLogEntity>(
+                tableStorage,
+                maxRetriesCount,
+                retryDelay: retryDelay ?? TimeSpan.FromSeconds(5));
+
             _rowKeyGenerator = rowKeyGenerator;
-            _maxRetriesCount = maxRetriesCount;
         }
 
         public void Persist(IEnumerable<TLogEntity> entries)
@@ -42,55 +51,12 @@ namespace Lykke.Logs
         protected override async Task Consume(IEnumerable<TLogEntity> entries)
         {
             var partitionGroups = entries.GroupBy(e => e.PartitionKey);
-            var tasks = partitionGroups.Select(group => SavePartitionGroupAsync(group.ToArray()));
+            var tasks = partitionGroups
+                .Select(group => _tableStorage.InsertBatchAndGenerateRowKeyAsync(
+                    group.ToArray(),
+                    (entity, retryNum, batchItemNum) => _rowKeyGenerator.Generate(entity, retryNum, batchItemNum)));
 
             await Task.WhenAll(tasks);
-        }
-
-        private async Task SavePartitionGroupAsync(IReadOnlyList<TLogEntity> group)
-        {
-            var retryNumber = 0;
-
-            while (true)
-            {
-                try
-                {
-                    await _tableStorage.InsertAsync(group);
-                    return;
-                }
-                catch (AggregateException ex)
-                    when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode ==
-                          (int)HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
-                {
-                    IncrementRowKeys(group, retryNumber);
-                }
-                catch (StorageException ex)
-                    when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Conflict && retryNumber < _maxRetriesCount)
-                {
-                    IncrementRowKeys(group, retryNumber);
-                }
-                catch (AggregateException ex)
-                    when ((ex.InnerExceptions[0] as StorageException)?.RequestInformation?.HttpStatusCode !=
-                          (int)HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
-                {
-                }
-                catch (StorageException ex)
-                    when (ex.RequestInformation.HttpStatusCode != (int)HttpStatusCode.BadRequest && retryNumber < _maxRetriesCount)
-                {
-                }
-
-                ++retryNumber;
-            }
-        }
-
-        private void IncrementRowKeys(IReadOnlyList<TLogEntity> group, int retryNumber)
-        {
-            for (var itemNumber = 0; itemNumber < group.Count; ++itemNumber)
-            {
-                var entry = group[itemNumber];
-
-                entry.RowKey = _rowKeyGenerator.Generate(entry, retryNumber, itemNumber);
-            }
         }
     }
 }
