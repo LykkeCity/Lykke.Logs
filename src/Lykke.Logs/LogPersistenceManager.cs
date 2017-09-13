@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
 using AzureStorage.Tables.Decorators;
@@ -10,7 +11,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 namespace Lykke.Logs
 {
     public class LogPersistenceManager<TLogEntity> :
-        ProducerConsumer<IReadOnlyList<TLogEntity>>,
+        ProducerConsumer<IEnumerable<TLogEntity>>,
         ILogPersistenceManager<TLogEntity> 
         
         where TLogEntity : ITableEntity, new()
@@ -42,16 +43,20 @@ namespace Lykke.Logs
             _rowKeyGenerator = rowKeyGenerator;
         }
 
-        public void Persist(IReadOnlyList<TLogEntity> entries)
+        public void Persist(IEnumerable<TLogEntity> entries)
         {
             Produce(entries);
         }
 
-        protected override async Task Consume(IReadOnlyList<TLogEntity> entries)
+        protected override async Task Consume(IEnumerable<TLogEntity> entries)
         {
-            await _tableStorage.InsertBatchAndGenerateRowKeyAsync(
-                    entries,
-                    (entity, retryNum, batchItemNum) => _rowKeyGenerator.Generate(entity, retryNum, batchItemNum));
+            var partitionGroups = entries.GroupBy(e => e.PartitionKey);
+            var tasks = partitionGroups
+                .Select(group => _tableStorage.InsertBatchAndGenerateRowKeyAsync(
+                    group.ToArray(),
+                    (entity, retryNum, batchItemNum) => _rowKeyGenerator.Generate(entity, retryNum, batchItemNum)));
+
+            await Task.WhenAll(tasks);
         }
     }
 }
