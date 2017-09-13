@@ -140,7 +140,7 @@ namespace Lykke.Logs
                 return Task.CompletedTask;
             }
 
-            IReadOnlyList<LogEntity> batchToSave = null;
+            IReadOnlyCollection<LogEntity> batchToSave = null;
 
             var now = DateTime.UtcNow;
 
