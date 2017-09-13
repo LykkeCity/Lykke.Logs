@@ -34,7 +34,7 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.IsAny<IReadOnlyCollection<LogEntity>>()), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.IsAny<IReadOnlyList<LogEntity>>()), Times.Never);
 
             log.Dispose();
         }
@@ -56,8 +56,8 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count < 10)), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count >= 10)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count < 10)), Times.Never);
 
             log.Dispose();
         }
@@ -79,8 +79,8 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromSeconds(1.5)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 15)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 15)), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count == 15)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count != 15)), Times.Never);
 
             log.Dispose();
         }
@@ -109,9 +109,9 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
             
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 5)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count < 10)), Times.Never);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count == 5)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count >= 10)), Times.Once);
+            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyList<LogEntity>>(e => e.Count != 5 && e.Count < 10)), Times.Never);
 
             log.Dispose();
         }
