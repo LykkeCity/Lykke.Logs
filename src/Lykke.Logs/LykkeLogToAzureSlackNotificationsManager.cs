@@ -24,25 +24,25 @@ namespace Lykke.Logs
 
         protected override async Task Consume(LogEntity entry)
         {
-            if (entry.Level == LykkeLogToAzureStorage.ErrorType || 
-                entry.Level == LykkeLogToAzureStorage.FatalErrorType || 
-                entry.Level == LykkeLogToAzureStorage.WarningType)
+            if (entry.Level != LykkeLogToAzureStorage.ErrorType
+                && entry.Level != LykkeLogToAzureStorage.FatalErrorType
+                && entry.Level != LykkeLogToAzureStorage.WarningType)
+                return;
+
+            var componentName = _componentName == entry.Component
+                ? _componentName
+                : $"{_componentName}:{entry.Component}";
+
+            switch (entry.Level)
             {
-                var componentName = _componentName == entry.Component
-                    ? _componentName
-                    : $"{_componentName}:{entry.Component}";
+                case LykkeLogToAzureStorage.ErrorType:
+                case LykkeLogToAzureStorage.FatalErrorType:
+                    await _slackNotificationsSender.SendErrorAsync($"{entry.Msg} : {entry.Stack}", componentName);
+                    break;
 
-                switch (entry.Level)
-                {
-                    case LykkeLogToAzureStorage.ErrorType:
-                    case LykkeLogToAzureStorage.FatalErrorType:
-                        await _slackNotificationsSender.SendErrorAsync($"{componentName} : {entry.Msg} : {entry.Stack}");
-                        break;
-
-                    case LykkeLogToAzureStorage.WarningType:
-                        await _slackNotificationsSender.SendWarningAsync($"{componentName} : {entry.Msg}");
-                        break;
-                }
+                case LykkeLogToAzureStorage.WarningType:
+                    await _slackNotificationsSender.SendWarningAsync($"{entry.Msg}", componentName);
+                    break;
             }
         }
     }
