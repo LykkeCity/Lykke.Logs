@@ -16,23 +16,17 @@ namespace Lykke.Logs
         /// <param name="lastResortLog">Last resort log (e.g. Console), which will be used to log logging infrastructure's issues</param>
         /// <param name="maxBatchLifetime">Log entries batch's lifetime, when exceeded, batch will be saved, and new batch will be started. Default is 5 seconds</param>
         /// <param name="batchSizeThreshold">Log messages batch's max size, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
-        /// <param name="maxRetriesCount">Max count of retries to save log entries batch into storage</param>
-        /// <param name="retryDelay">Gap between retries on insert failure. Default value is 5 seconds</param>
         public static LykkeLogToAzureStorage UseLogToAzureStorage(this IServiceCollection serviceCollection,
             IReloadingManager<string> connectionString,
             ISlackNotificationsSender slackNotificationsSender = null,
             string tableName = "Logs",
             ILog lastResortLog = null,
             TimeSpan? maxBatchLifetime = null,
-            int batchSizeThreshold = 100,
-            int maxRetriesCount = 10,
-            TimeSpan? retryDelay = null)
+            int batchSizeThreshold = 100)
         {
             var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
                 AzureTableStorage<LogEntity>.Create(connectionString, tableName, lastResortLog),
-                lastResortLog,
-                maxRetriesCount,
-                retryDelay);
+                lastResortLog);
 
             var slackNotificationsManager = slackNotificationsSender != null
                 ? new LykkeLogToAzureSlackNotificationsManager(slackNotificationsSender, lastResortLog)
