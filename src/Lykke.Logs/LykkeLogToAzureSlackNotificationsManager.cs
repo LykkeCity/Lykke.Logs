@@ -29,7 +29,7 @@ namespace Lykke.Logs
                 && entry.Level != LykkeLogToAzureStorage.WarningType)
                 return;
 
-            var componentName = _componentName == entry.Component
+            var componentName = _componentName != null && _componentName.StartsWith(entry.Component)
                 ? _componentName
                 : $"{_componentName}:{entry.Component}";
 
