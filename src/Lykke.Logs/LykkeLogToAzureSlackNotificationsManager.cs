@@ -1,20 +1,34 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.PlatformAbstractions;
 using Common;
 using Common.Log;
 using Lykke.SlackNotifications;
 
 namespace Lykke.Logs
 {
-    public class LykkeLogToAzureSlackNotificationsManager : 
-        ProducerConsumer<LogEntity>,
-        ILykkeLogToAzureSlackNotificationsManager
+    public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {
         private readonly ISlackNotificationsSender _slackNotificationsSender;
+        private readonly string _component;
 
-        public LykkeLogToAzureSlackNotificationsManager(string componentName, ISlackNotificationsSender slackNotificationsSender, ILog lastResortLog = null) : 
-            base(componentName, lastResortLog)
+        public LykkeLogToAzureSlackNotificationsManager(
+            string componentName,
+            ISlackNotificationsSender slackNotificationsSender,
+            ILog lastResortLog = null)
+            : base(componentName, lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
+            _component = componentName;
+        }
+
+        public LykkeLogToAzureSlackNotificationsManager(
+            ISlackNotificationsSender slackNotificationsSender,
+            ILog lastResortLog = null)
+            : base(lastResortLog)
+        {
+            _slackNotificationsSender = slackNotificationsSender;
+            var app = PlatformServices.Default.Application;
+            _component = $"{app.ApplicationName} {app.ApplicationVersion}";
         }
 
         public void SendNotification(LogEntity entry)
@@ -29,9 +43,9 @@ namespace Lykke.Logs
                 && entry.Level != LykkeLogToAzureStorage.WarningType)
                 return;
 
-            var componentName = _componentName != null && _componentName.StartsWith(entry.Component)
-                ? _componentName
-                : $"{_componentName}:{entry.Component}";
+            var componentName = _component != null && _component.StartsWith(entry.Component)
+                ? _component
+                : $"{_component}:{entry.Component}";
 
             switch (entry.Level)
             {

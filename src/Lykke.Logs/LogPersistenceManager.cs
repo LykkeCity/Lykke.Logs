@@ -10,10 +10,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
 {
-    public class LogPersistenceManager<TLogEntity> :
-        ProducerConsumer<IEnumerable<TLogEntity>>,
-        ILogPersistenceManager<TLogEntity> 
-        
+    public class LogPersistenceManager<TLogEntity> : ProducerConsumer<IEnumerable<TLogEntity>>, ILogPersistenceManager<TLogEntity> 
         where TLogEntity : ITableEntity, new()
     {
         private readonly INoSQLTableStorage<TLogEntity> _tableStorage;
@@ -31,9 +28,29 @@ namespace Lykke.Logs
             ILogEntityRowKeyGenerator<TLogEntity> rowKeyGenerator,
             ILog lastResortLog = null,
             int maxRetriesCount = 10,
-            TimeSpan? retryDelay = null) :
+            TimeSpan? retryDelay = null)
+            : base(componentName, lastResortLog)
+        {
+            _tableStorage = new RetryOnFailureAzureTableStorageDecorator<TLogEntity>(
+                tableStorage,
+                maxRetriesCount,
+                retryDelay: retryDelay ?? TimeSpan.FromSeconds(5));
 
-            base(componentName, lastResortLog)
+            _rowKeyGenerator = rowKeyGenerator;
+        }
+
+        /// <param name="tableStorage"></param>
+        /// <param name="rowKeyGenerator"></param>
+        /// <param name="lastResortLog"></param>
+        /// <param name="maxRetriesCount">Max count of retries on insert failure</param>
+        /// <param name="retryDelay">Gap between retries on insert failure. Default value is 5 seconds</param>
+        public LogPersistenceManager(
+            INoSQLTableStorage<TLogEntity> tableStorage,
+            ILogEntityRowKeyGenerator<TLogEntity> rowKeyGenerator,
+            ILog lastResortLog = null,
+            int maxRetriesCount = 10,
+            TimeSpan? retryDelay = null)
+            : base(lastResortLog)
         {
             _tableStorage = new RetryOnFailureAzureTableStorageDecorator<TLogEntity>(
                 tableStorage,

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.PlatformAbstractions;
 using Autofac;
 using Common;
 using Common.Log;
@@ -9,9 +10,7 @@ using Lykke.AzureStorage;
 
 namespace Lykke.Logs
 {
-    public class LykkeLogToAzureStorage : 
-        TimerPeriod,
-        ILog
+    public class LykkeLogToAzureStorage : TimerPeriod, ILog
     {
         public const string ErrorType = "error";
         public const string FatalErrorType = "fatalerror";
@@ -24,6 +23,7 @@ namespace Lykke.Logs
         private readonly int _batchSizeThreshold;
         private readonly bool _ownPersistenceManager;
         private readonly bool _ownSlackNotificationsManager;
+        private readonly string _component;
 
         private List<LogEntity> _currentBatch;
         private volatile int _currentBatchSize;
@@ -57,6 +57,40 @@ namespace Lykke.Logs
             _ownPersistenceManager = ownPersistenceManager;
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
+
+            var app = PlatformServices.Default.Application;
+            _component = $"{app.ApplicationName} {app.ApplicationVersion}";
+
+            StartNewBatch();
+        }
+
+        /// <param name="persistenceManager">Persistence manager</param>
+        /// <param name="slackNotificationsManager">Slack notifications manager. Can be null</param>
+        /// <param name="lastResortLog">Last resort log (e.g. Console), which will be used to log logging infrastructure's issues</param>
+        /// <param name="maxBatchLifetime">Log entries batch's lifetime, when exceeded, batch will be saved, and new batch will be started. Default is 5 seconds</param>
+        /// <param name="batchSizeThreshold">Log messages batch's size threshold, when exceeded, batch will be saved, and new batch will be started. Default is 100 entries</param>
+        /// <param name="ownPersistenceManager">Is log instance owns persistence manager: should it manages Start/Stop</param>
+        /// <param name="ownSlackNotificationsManager">Is log instance owns slack notifications manager: should it manages Start/Stop</param>
+        public LykkeLogToAzureStorage(
+            ILykkeLogToAzureStoragePersistenceManager persistenceManager,
+            ILykkeLogToAzureSlackNotificationsManager slackNotificationsManager = null,
+            ILog lastResortLog = null,
+            TimeSpan? maxBatchLifetime = null,
+            int batchSizeThreshold = 100,
+            bool ownPersistenceManager = true,
+            bool ownSlackNotificationsManager = true)
+            : base(periodMs: 20, log: lastResortLog ?? new EmptyLog())
+        {
+            _persistenceManager = persistenceManager;
+            _slackNotificationsManager = slackNotificationsManager;
+            _lastResortLog = lastResortLog;
+            _batchSizeThreshold = batchSizeThreshold;
+            _ownPersistenceManager = ownPersistenceManager;
+            _ownSlackNotificationsManager = ownSlackNotificationsManager;
+            _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
+
+            var app = PlatformServices.Default.Application;
+            _component = $"{app.ApplicationName} {app.ApplicationVersion}";
 
             StartNewBatch();
         }
@@ -131,6 +165,42 @@ namespace Lykke.Logs
         {
             return Insert(FatalErrorType, component, process, context, exception.GetType().ToString(),
                 exception.ToString(), GetExceptionMessage(exception), dateTime);
+        }
+
+        public Task WriteInfoAsync(string process, string context, string info, DateTime? dateTime = null)
+        {
+            return Insert("info", _component, process, context, null, null, info, dateTime);
+        }
+
+        public Task WriteWarningAsync(string process, string context, string info, DateTime? dateTime = null)
+        {
+            return Insert(WarningType, _component, process, context, null, null, info, dateTime);
+        }
+
+        public Task WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
+        {
+            return Insert(
+                ErrorType,
+                _component,
+                process,
+                context,
+                exception.GetType().ToString(),
+                exception.ToString(),
+                GetExceptionMessage(exception),
+                dateTime);
+        }
+
+        public Task WriteFatalErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
+        {
+            return Insert(
+                FatalErrorType,
+                _component,
+                process,
+                context,
+                exception.GetType().ToString(),
+                exception.ToString(),
+                GetExceptionMessage(exception),
+                dateTime);
         }
 
         public override Task Execute()

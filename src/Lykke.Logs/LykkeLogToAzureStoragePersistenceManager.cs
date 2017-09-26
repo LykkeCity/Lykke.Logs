@@ -14,10 +14,24 @@ namespace Lykke.Logs
             INoSQLTableStorage<LogEntity> tableStorage,
             ILog lastResortLog = null,
             int maxRetriesCount = 10,
-            TimeSpan? retryDelay = null) :
+            TimeSpan? retryDelay = null)
+            : base(
+                componentName,
+                tableStorage,
+                new LykkeLogToAzureEntityRowKeyGenerator(),
+                lastResortLog,
+                maxRetriesCount,
+                retryDelay)
+        {
+        }
 
-            base(
-                componentName, 
+        /// <inheritdoc />
+        public LykkeLogToAzureStoragePersistenceManager(
+            INoSQLTableStorage<LogEntity> tableStorage,
+            ILog lastResortLog = null,
+            int maxRetriesCount = 10,
+            TimeSpan? retryDelay = null)
+            : base(
                 tableStorage,
                 new LykkeLogToAzureEntityRowKeyGenerator(),
                 lastResortLog,

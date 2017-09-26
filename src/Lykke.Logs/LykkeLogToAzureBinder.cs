@@ -28,21 +28,17 @@ namespace Lykke.Logs
             int maxRetriesCount = 10,
             TimeSpan? retryDelay = null)
         {
-            var applicationName = Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationName;
-
             var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
-                applicationName,
                 AzureTableStorage<LogEntity>.Create(connectionString, tableName, lastResortLog),
                 lastResortLog,
                 maxRetriesCount,
                 retryDelay);
 
             var slackNotificationsManager = slackNotificationsSender != null
-                ? new LykkeLogToAzureSlackNotificationsManager(applicationName, slackNotificationsSender, lastResortLog)
+                ? new LykkeLogToAzureSlackNotificationsManager(slackNotificationsSender, lastResortLog)
                 : null;
 
             var log = new LykkeLogToAzureStorage(
-                applicationName,
                 persistenceManager,
                 slackNotificationsManager,
                 lastResortLog,
