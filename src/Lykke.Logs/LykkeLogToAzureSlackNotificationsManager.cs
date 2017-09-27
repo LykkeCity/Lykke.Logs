@@ -43,19 +43,18 @@ namespace Lykke.Logs
                 return;
 
             var componentName = _component != null && _component.StartsWith(entry.Component)
-                ? _component
-                : $"{_component}:{entry.Component}";
-            var senderName = $"{componentName} {entry.Version}";
+                ? $"{_component} {entry.Version}"
+                : $"{_component} {entry.Version}:{entry.Component}";
 
             switch (entry.Level)
             {
                 case LykkeLogToAzureStorage.ErrorType:
                 case LykkeLogToAzureStorage.FatalErrorType:
-                    await _slackNotificationsSender.SendErrorAsync($"{entry.Msg} : {entry.Stack}", senderName);
+                    await _slackNotificationsSender.SendErrorAsync($"{entry.Msg} : {entry.Stack}", componentName);
                     break;
 
                 case LykkeLogToAzureStorage.WarningType:
-                    await _slackNotificationsSender.SendWarningAsync($"{entry.Msg}", senderName);
+                    await _slackNotificationsSender.SendWarningAsync($"{entry.Msg}", componentName);
                     break;
             }
         }
