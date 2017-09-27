@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
@@ -7,6 +8,7 @@ namespace Lykke.Logs
     {
         public DateTime DateTime { get; set; }
         public string Level { get; set; }
+        public string Version { get; set; }
         public string Component { get; set; }
         public string Process { get; set; }
         public string Context { get; set; }
@@ -14,6 +16,13 @@ namespace Lykke.Logs
         public string Stack { get; set; }
         public string Msg { get; set; }
 
+        private static readonly string AppVersion;
+
+        static LogEntity()
+        {
+            AppVersion = PlatformServices.Default.Application.ApplicationVersion;
+        }
+        
         public static LogEntity CreateWithoutRowKey(
             string level,
             string component,
@@ -29,6 +38,7 @@ namespace Lykke.Logs
                 PartitionKey = GeneratePartitionKey(dateTime),
                 DateTime = dateTime,
                 Level = level,
+                Version = AppVersion,
                 Component = component,
                 Process = process,
                 Context = context,
