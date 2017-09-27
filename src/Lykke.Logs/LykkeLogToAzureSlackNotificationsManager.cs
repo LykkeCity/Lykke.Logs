@@ -27,8 +27,7 @@ namespace Lykke.Logs
             : base(lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
-            var app = PlatformServices.Default.Application;
-            _component = $"{app.ApplicationName} {app.ApplicationVersion}";
+            _component = PlatformServices.Default.Application.ApplicationName;
         }
 
         public void SendNotification(LogEntity entry)
