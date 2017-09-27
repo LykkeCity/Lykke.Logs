@@ -16,6 +16,13 @@ namespace Lykke.Logs
         public string Stack { get; set; }
         public string Msg { get; set; }
 
+        private static readonly string AppVersion;
+
+        static LogEntity()
+        {
+            AppVersion = PlatformServices.Default.Application.ApplicationVersion;
+        }
+        
         public static LogEntity CreateWithoutRowKey(
             string level,
             string component,
@@ -31,7 +38,7 @@ namespace Lykke.Logs
                 PartitionKey = GeneratePartitionKey(dateTime),
                 DateTime = dateTime,
                 Level = level,
-                Version = PlatformServices.Default.Application.ApplicationVersion,
+                Version = AppVersion,
                 Component = component,
                 Process = process,
                 Context = context,
