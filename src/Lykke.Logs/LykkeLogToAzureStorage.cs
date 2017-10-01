@@ -6,7 +6,6 @@ using Microsoft.Extensions.PlatformAbstractions;
 using Autofac;
 using Common;
 using Common.Log;
-using Lykke.AzureStorage;
 
 namespace Lykke.Logs
 {
