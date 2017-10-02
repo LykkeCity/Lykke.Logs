@@ -50,11 +50,11 @@ namespace Lykke.Logs
             {
                 case LykkeLogToAzureStorage.ErrorType:
                 case LykkeLogToAzureStorage.FatalErrorType:
-                    await _slackNotificationsSender.SendErrorAsync($"{entry.Msg} : {entry.Stack}", componentName);
+                    await _slackNotificationsSender.SendErrorAsync($"{entry.Msg} : {entry.Stack} : {entry.Context}", componentName);
                     break;
 
                 case LykkeLogToAzureStorage.WarningType:
-                    await _slackNotificationsSender.SendWarningAsync($"{entry.Msg}", componentName);
+                    await _slackNotificationsSender.SendWarningAsync($"{entry.Msg} : {entry.Context}", componentName);
                     break;
             }
         }
