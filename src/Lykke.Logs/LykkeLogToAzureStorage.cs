@@ -14,6 +14,7 @@ namespace Lykke.Logs
         public const string ErrorType = "error";
         public const string FatalErrorType = "fatalerror";
         public const string WarningType = "warning";
+        public const string MonitorType = "monitor";
 
         private readonly ILykkeLogToAzureStoragePersistenceManager _persistenceManager;
         private ILykkeLogToAzureSlackNotificationsManager _slackNotificationsManager;
@@ -144,6 +145,11 @@ namespace Lykke.Logs
             return Insert("info", component, process, context, null, null, info, dateTime);
         }
 
+        public Task WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime = null)
+        {
+            return Insert(MonitorType, component, process, context, null, null, info, dateTime);
+        }
+
         public Task WriteWarningAsync(string component, string process, string context, string info,
             DateTime? dateTime = null)
         {
@@ -167,6 +173,11 @@ namespace Lykke.Logs
         public Task WriteInfoAsync(string process, string context, string info, DateTime? dateTime = null)
         {
             return Insert("info", _component, process, context, null, null, info, dateTime);
+        }
+
+        public Task WriteMonitorAsync(string process, string context, string info, DateTime? dateTime = null)
+        {
+            return Insert(MonitorType, _component, process, context, null, null, info, dateTime);
         }
 
         public Task WriteWarningAsync(string process, string context, string info, DateTime? dateTime = null)

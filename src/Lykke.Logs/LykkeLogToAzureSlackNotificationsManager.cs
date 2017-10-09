@@ -70,6 +70,17 @@ namespace Lykke.Logs
 
                     break;
                 }
+
+                case LykkeLogToAzureStorage.MonitorType:
+                {
+                    var message = entry.Context != null
+                        ? $"{entry.Msg} : {entry.Context}"
+                        : entry.Msg;
+
+                    await _slackNotificationsSender.SendMonitorAsync(message, componentName);
+
+                    break;
+                }
             }
         }
     }
