@@ -39,7 +39,8 @@ namespace Lykke.Logs
         {
             if (entry.Level != LykkeLogToAzureStorage.ErrorType
                 && entry.Level != LykkeLogToAzureStorage.FatalErrorType
-                && entry.Level != LykkeLogToAzureStorage.WarningType)
+                && entry.Level != LykkeLogToAzureStorage.WarningType
+                && entry.Level != LykkeLogToAzureStorage.MonitorType)
                 return;
 
             var componentName = _component != null && _component.StartsWith(entry.Component)

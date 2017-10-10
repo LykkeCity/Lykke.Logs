@@ -129,7 +129,7 @@ namespace Lykke.Logs.Tests
             // Act
             for (var i = 0; i < 15; ++i)
             {
-                log.WriteInfoAsync("Test", "", "", "");
+                log.WriteMonitorAsync("Test", "", "", "");
             }
 
             Task.Delay(TimeSpan.FromSeconds(1.5)).Wait();
