@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncFriendlyStackTrace;
 using Microsoft.Extensions.PlatformAbstractions;
 using Autofac;
 using Common;
@@ -159,56 +160,54 @@ namespace Lykke.Logs
         public Task WriteErrorAsync(string component, string process, string context, Exception exception,
             DateTime? dateTime = null)
         {
-            return Insert(ErrorType, component, process, context, exception.GetType().ToString(), exception.ToString(),
-                GetExceptionMessage(exception), dateTime);
+            return Insert(
+                ErrorType, 
+                component, 
+                process, 
+                context, 
+                exception.GetType().ToString(), 
+                exception.ToAsyncString(),
+                GetExceptionMessage(exception), 
+                dateTime);
         }
 
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception exception,
             DateTime? dateTime = null)
         {
-            return Insert(FatalErrorType, component, process, context, exception.GetType().ToString(),
-                exception.ToString(), GetExceptionMessage(exception), dateTime);
+            return Insert(
+                FatalErrorType,
+                component, 
+                process, 
+                context, 
+                exception.GetType().ToString(),
+                exception.ToAsyncString(), 
+                GetExceptionMessage(exception),
+                dateTime);
         }
 
         public Task WriteInfoAsync(string process, string context, string info, DateTime? dateTime = null)
         {
-            return Insert("info", _component, process, context, null, null, info, dateTime);
+            return WriteInfoAsync(_component, process, context, info, dateTime);
         }
 
         public Task WriteMonitorAsync(string process, string context, string info, DateTime? dateTime = null)
         {
-            return Insert(MonitorType, _component, process, context, null, null, info, dateTime);
+            return WriteMonitorAsync(_component, process, context, info, dateTime);
         }
 
         public Task WriteWarningAsync(string process, string context, string info, DateTime? dateTime = null)
         {
-            return Insert(WarningType, _component, process, context, null, null, info, dateTime);
+            return WriteWarningAsync(_component, process, context, info, dateTime);
         }
 
         public Task WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            return Insert(
-                ErrorType,
-                _component,
-                process,
-                context,
-                exception.GetType().ToString(),
-                exception.ToString(),
-                GetExceptionMessage(exception),
-                dateTime);
+            return WriteErrorAsync(_component, process, context, exception, dateTime);
         }
 
         public Task WriteFatalErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            return Insert(
-                FatalErrorType,
-                _component,
-                process,
-                context,
-                exception.GetType().ToString(),
-                exception.ToString(),
-                GetExceptionMessage(exception),
-                dateTime);
+            return WriteFatalErrorAsync(_component, process, context, exception, dateTime);
         }
 
         public override Task Execute()
