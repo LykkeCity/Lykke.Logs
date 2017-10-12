@@ -53,8 +53,8 @@ namespace Lykke.Logs
                 case LykkeLogToAzureStorage.FatalErrorType:
                 {
                     var message = entry.Context != null
-                        ? $"{entry.Msg} : {entry.Stack} : {entry.Context}"
-                        : $"{entry.Msg} : {entry.Stack}";
+                        ? $"{entry.Msg} : {entry.Context}"
+                        : entry.Msg;
 
                     await _slackNotificationsSender.SendErrorAsync(message, componentName);
 
