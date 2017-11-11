@@ -15,11 +15,27 @@
     <PackageTags>Lykke</PackageTags>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\Lykke.Logs.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\Lykke.Logs.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AsyncFriendlyStackTrace" Version="1.5.0" />
-    <PackageReference Include="Lykke.AzureStorage" Version="2.0.1" />
-    <PackageReference Include="Lykke.Common" Version="3.0.0" />
+    <PackageReference Include="Lykke.AzureStorage" Version="2.1.4" />
+    <PackageReference Include="Lykke.Common" Version="3.0.2" />
     <PackageReference Include="Lykke.SlackNotifications" Version="1.1.0" />
+    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.5.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Label="dotnet pack instructions">
+    <Content Include="$(OutputPath)$(AssemblyName).pdb">
+      <Pack>true</Pack>
+      <PackagePath>lib/netstandard2.0</PackagePath>
+    </Content>
   </ItemGroup>
 
 </Project>
