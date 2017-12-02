@@ -2,6 +2,9 @@
 
 namespace Lykke.Logs
 {
+    /// <summary>
+    /// Specifies log level
+    /// </summary>
     [Flags]
     public enum LogLevel
     {

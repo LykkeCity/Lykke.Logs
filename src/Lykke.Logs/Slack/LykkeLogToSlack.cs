@@ -7,6 +7,9 @@ using Lykke.SlackNotifications;
 
 namespace Lykke.Logs.Slack
 {
+    /// <summary>
+    /// Logs entries to the specified Slack channel. Which types of entries should be logged, can be configured
+    /// </summary>
     [PublicAPI]
     public sealed class LykkeLogToSlack : ILog
     {
@@ -21,6 +24,10 @@ namespace Lykke.Logs.Slack
             _logLevel = logLevel;
         }
 
+        /// <summary>
+        /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>,
+        /// to the given <paramref name="channel"/>, using given <paramref name="sender"/>
+        /// </summary>
         public static ILog Create(ISlackNotificationsSender sender, string channel, LogLevel logLevel = LogLevel.All)
         {
             return new LykkeLogToSlack(sender, channel, logLevel);
