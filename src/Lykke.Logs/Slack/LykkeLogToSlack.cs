@@ -15,13 +15,22 @@ namespace Lykke.Logs.Slack
     {
         private readonly ISlackNotificationsSender _sender;
         private readonly string _channel;
-        private readonly LogLevel _logLevel;
+        private readonly bool _isInfoEnabled;
+        private readonly bool _isMonitorEnabled;
+        private readonly bool _isWarningEnabled;
+        private readonly bool _isErrorEnabled;
+        private readonly bool _isFatalErrorEnabled;
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
             _sender = sender;
             _channel = channel;
-            _logLevel = logLevel;
+
+            _isInfoEnabled = logLevel.HasFlag(LogLevel.Info);
+            _isMonitorEnabled = logLevel.HasFlag(LogLevel.Monitoring);
+            _isWarningEnabled = logLevel.HasFlag(LogLevel.Warning);
+            _isErrorEnabled = logLevel.HasFlag(LogLevel.Error);
+            _isFatalErrorEnabled = logLevel.HasFlag(LogLevel.FatalError);
         }
 
         /// <summary>
@@ -35,8 +44,7 @@ namespace Lykke.Logs.Slack
 
         public Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            if (_logLevel.HasFlag(LogLevel.Info))
+            if (_isInfoEnabled)
             {
                 return _sender.SendAsync(_channel, ":information_source:", $"{GetComponentName(component)} : {process} : {info} : {context}");
             }
@@ -44,29 +52,9 @@ namespace Lykke.Logs.Slack
             return Task.CompletedTask;
         }
 
-        private string GetComponentName(string component)
-        {
-            var sb = new StringBuilder();
-
-            sb.Append($"{AppEnvironment.Name} {AppEnvironment.Version}");
-
-            if (!string.IsNullOrWhiteSpace(AppEnvironment.EnvInfo))
-            {
-                sb.Append($" : {AppEnvironment.EnvInfo}");
-            }
-
-            if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
-            {
-                sb.Append($" : {component}");
-            }
-
-            return sb.ToString();
-        }
-
         public Task WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            if (_logLevel.HasFlag(LogLevel.Monitoring))
+            if (_isMonitorEnabled)
             {
                 return _sender.SendAsync(_channel, ":loudspeaker:", $"{component} : {process} : {info} : {context}");
             }
@@ -76,8 +64,7 @@ namespace Lykke.Logs.Slack
 
         public Task WriteWarningAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            if (_logLevel.HasFlag(LogLevel.Warning))
+            if (_isWarningEnabled)
             {
                 return _sender.SendAsync(_channel, ":warning:", $"{component} : {process} : {info} : {context}");
             }
@@ -87,8 +74,7 @@ namespace Lykke.Logs.Slack
 
         public Task WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            if (_logLevel.HasFlag(LogLevel.Error))
+            if (_isErrorEnabled)
             {
                 return _sender.SendAsync(_channel, ":exclamation:", $"{component} : {process} : {exception} : {context}");
             }
@@ -99,8 +85,7 @@ namespace Lykke.Logs.Slack
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception exception,
             DateTime? dateTime = null)
         {
-            // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-            if (_logLevel.HasFlag(LogLevel.FatalError))
+            if (_isFatalErrorEnabled)
             {
                 return _sender.SendAsync(_channel, ":no_entry:", $"{component} : {process} : {exception} : {context}");
             }
@@ -131,6 +116,25 @@ namespace Lykke.Logs.Slack
         public Task WriteFatalErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
         {
             return WriteFatalErrorAsync(AppEnvironment.Name, process, context, exception, dateTime);
+        }
+
+        private string GetComponentName(string component)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append($"{AppEnvironment.Name} {AppEnvironment.Version}");
+
+            if (!string.IsNullOrWhiteSpace(AppEnvironment.EnvInfo))
+            {
+                sb.Append($" : {AppEnvironment.EnvInfo}");
+            }
+
+            if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
+            {
+                sb.Append($" : {component}");
+            }
+
+            return sb.ToString();
         }
     }
 }
