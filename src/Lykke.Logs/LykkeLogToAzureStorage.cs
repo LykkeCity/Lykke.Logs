@@ -59,7 +59,7 @@ namespace Lykke.Logs
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
 
-            _component = PlatformServices.Default.Application.ApplicationName;
+            _component = AppEnvironment.Name;
 
             StartNewBatch();
         }
@@ -89,7 +89,7 @@ namespace Lykke.Logs
             _ownSlackNotificationsManager = ownSlackNotificationsManager;
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
 
-            _component = PlatformServices.Default.Application.ApplicationName;
+            _component = AppEnvironment.Name;
 
             StartNewBatch();
         }

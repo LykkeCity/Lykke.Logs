@@ -1,3 +1,4 @@
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.PlatformAbstractions;
 using Common;
@@ -27,7 +28,7 @@ namespace Lykke.Logs
             : base(lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
-            _component = PlatformServices.Default.Application.ApplicationName;
+            _component = AppEnvironment.Name;
         }
 
         public void SendNotification(LogEntity entry)
@@ -43,9 +44,7 @@ namespace Lykke.Logs
                 && entry.Level != LykkeLogToAzureStorage.MonitorType)
                 return;
 
-            var componentName = _component != null && _component.StartsWith(entry.Component)
-                ? $"{_component} {entry.Version}"
-                : $"{_component} {entry.Version}:{entry.Component}";
+            var componentName = GetComponentName(entry);
 
             switch (entry.Level)
             {
@@ -83,6 +82,25 @@ namespace Lykke.Logs
                     break;
                 }
             }
+        }
+
+        private string GetComponentName(LogEntity entry)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append($"{_component} {entry.Version}");
+
+            if (!string.IsNullOrWhiteSpace(entry.Env))
+            {
+                sb.Append($" : {entry.Env}");
+            }
+
+            if (_component == null || !_component.StartsWith(entry.Component))
+            {
+                sb.Append($" : {entry.Component}");
+            }
+
+            return sb.ToString();
         }
     }
 }
