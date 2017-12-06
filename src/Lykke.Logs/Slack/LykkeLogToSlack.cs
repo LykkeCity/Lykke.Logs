@@ -56,7 +56,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isMonitorEnabled)
             {
-                return _sender.SendAsync(_channel, ":loudspeaker:", $"{component} : {process} : {info} : {context}");
+                return _sender.SendAsync(_channel, ":loudspeaker:", $"{GetComponentName(component)} : {process} : {info} : {context}");
             }
 
             return Task.CompletedTask;
@@ -66,7 +66,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{component} : {process} : {info} : {context}");
+                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {info} : {context}");
             }
 
             return Task.CompletedTask;
@@ -76,7 +76,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":exclamation:", $"{component} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":exclamation:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
             }
 
             return Task.CompletedTask;
@@ -87,7 +87,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isFatalErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":no_entry:", $"{component} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
             }
 
             return Task.CompletedTask;
