@@ -137,16 +137,14 @@ namespace Lykke.Logs.Slack
 
         private string GetComponentName(string component)
         {
-            var sb = new StringBuilder();
-
-            sb.Append(_componentNamePrefix);
-
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
             {
-                sb.Append($" : {component}");
+                return string.Concat(_componentNamePrefix, " : ", component);
             }
-
-            return sb.ToString();
+            else
+            {
+                return _componentNamePrefix;
+            }
         }
     }
 }
