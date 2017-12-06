@@ -20,6 +20,7 @@ namespace Lykke.Logs.Slack
         private readonly bool _isWarningEnabled;
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
+        private readonly string _componentNamePrefix;
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
@@ -31,6 +32,8 @@ namespace Lykke.Logs.Slack
             _isWarningEnabled = logLevel.HasFlag(LogLevel.Warning);
             _isErrorEnabled = logLevel.HasFlag(LogLevel.Error);
             _isFatalErrorEnabled = logLevel.HasFlag(LogLevel.FatalError);
+
+            _componentNamePrefix = GetComponentNamePrefix();
         }
 
         /// <summary>
@@ -118,7 +121,7 @@ namespace Lykke.Logs.Slack
             return WriteFatalErrorAsync(AppEnvironment.Name, process, context, exception, dateTime);
         }
 
-        private string GetComponentName(string component)
+        private string GetComponentNamePrefix()
         {
             var sb = new StringBuilder();
 
@@ -128,6 +131,15 @@ namespace Lykke.Logs.Slack
             {
                 sb.Append($" : {AppEnvironment.EnvInfo}");
             }
+
+            return sb.ToString();
+        }
+
+        private string GetComponentName(string component)
+        {
+            var sb = new StringBuilder();
+
+            sb.Append(_componentNamePrefix);
 
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
             {
