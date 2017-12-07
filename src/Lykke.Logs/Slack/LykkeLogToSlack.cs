@@ -20,6 +20,7 @@ namespace Lykke.Logs.Slack
         private readonly bool _isWarningEnabled;
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
+        private readonly string _componentNamePrefix;
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
@@ -31,6 +32,8 @@ namespace Lykke.Logs.Slack
             _isWarningEnabled = logLevel.HasFlag(LogLevel.Warning);
             _isErrorEnabled = logLevel.HasFlag(LogLevel.Error);
             _isFatalErrorEnabled = logLevel.HasFlag(LogLevel.FatalError);
+
+            _componentNamePrefix = GetComponentNamePrefix();
         }
 
         /// <summary>
@@ -56,7 +59,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isMonitorEnabled)
             {
-                return _sender.SendAsync(_channel, ":loudspeaker:", $"{component} : {process} : {info} : {context}");
+                return _sender.SendAsync(_channel, ":loudspeaker:", $"{GetComponentName(component)} : {process} : {info} : {context}");
             }
 
             return Task.CompletedTask;
@@ -66,7 +69,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{component} : {process} : {info} : {context}");
+                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {info} : {context}");
             }
 
             return Task.CompletedTask;
@@ -76,7 +79,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":exclamation:", $"{component} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":exclamation:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
             }
 
             return Task.CompletedTask;
@@ -87,7 +90,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isFatalErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":no_entry:", $"{component} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
             }
 
             return Task.CompletedTask;
@@ -118,7 +121,7 @@ namespace Lykke.Logs.Slack
             return WriteFatalErrorAsync(AppEnvironment.Name, process, context, exception, dateTime);
         }
 
-        private string GetComponentName(string component)
+        private string GetComponentNamePrefix()
         {
             var sb = new StringBuilder();
 
@@ -129,12 +132,19 @@ namespace Lykke.Logs.Slack
                 sb.Append($" : {AppEnvironment.EnvInfo}");
             }
 
+            return sb.ToString();
+        }
+
+        private string GetComponentName(string component)
+        {
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
             {
-                sb.Append($" : {component}");
+                return string.Concat(_componentNamePrefix, " : ", component);
             }
-
-            return sb.ToString();
+            else
+            {
+                return _componentNamePrefix;
+            }
         }
     }
 }
