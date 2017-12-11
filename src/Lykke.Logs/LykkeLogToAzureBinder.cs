@@ -43,8 +43,17 @@ namespace Lykke.Logs
 
             log.Start();
 
-            serviceCollection.AddSingleton<ILog>(log);
-
+            if (lastResortLog == null)
+            {
+                serviceCollection.AddSingleton<ILog>(log);
+            }
+            else
+            {
+                var aggregatedLog = new AggregateLogger();
+                aggregatedLog.AddLog(lastResortLog);
+                aggregatedLog.AddLog(log);
+                serviceCollection.AddSingleton<ILog>(aggregatedLog);
+            }
             return log;
         }
     }
