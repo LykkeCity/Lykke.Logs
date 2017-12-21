@@ -75,6 +75,17 @@ namespace Lykke.Logs.Slack
             return Task.CompletedTask;
         }
 
+        public Task WriteWarningAsync(string component, string process, string context, string info, Exception ex,
+            DateTime? dateTime = null)
+        {
+            if (_isWarningEnabled)
+            {
+                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}");
+            }
+
+            return Task.CompletedTask;
+        }
+
         public Task WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
         {
             if (_isErrorEnabled)
@@ -109,6 +120,11 @@ namespace Lykke.Logs.Slack
         public Task WriteWarningAsync(string process, string context, string info, DateTime? dateTime = null)
         {
             return WriteWarningAsync(AppEnvironment.Name, process, context, info, dateTime);
+        }
+
+        public Task WriteWarningAsync(string process, string context, string info, Exception ex, DateTime? dateTime = null)
+        {
+            return WriteWarningAsync(AppEnvironment.Name, process, context, info, ex, dateTime);
         }
 
         public Task WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)

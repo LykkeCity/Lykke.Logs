@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using AsyncFriendlyStackTrace;
-using Microsoft.Extensions.PlatformAbstractions;
 using Autofac;
 using Common;
 using Common.Log;
@@ -157,6 +156,11 @@ namespace Lykke.Logs
             return Insert(WarningType, component, process, context, null, null, info, dateTime);
         }
 
+        public Task WriteWarningAsync(string component, string process, string context, string info, Exception ex, DateTime? dateTime = null)
+        {
+            return Insert(WarningType, component, process, context, ex.GetType().ToString(), ex.ToAsyncString(), info, dateTime);
+        }
+
         public Task WriteErrorAsync(string component, string process, string context, Exception exception,
             DateTime? dateTime = null)
         {
@@ -198,6 +202,10 @@ namespace Lykke.Logs
         public Task WriteWarningAsync(string process, string context, string info, DateTime? dateTime = null)
         {
             return WriteWarningAsync(_component, process, context, info, dateTime);
+        }
+        public Task WriteWarningAsync(string process, string context, string info, Exception ex, DateTime? dateTime = null)
+        {
+            return WriteWarningAsync(_component, process, context, info, ex, dateTime);
         }
 
         public Task WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime = null)
