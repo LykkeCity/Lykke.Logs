@@ -1,6 +1,6 @@
+using System;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.PlatformAbstractions;
 using Common;
 using Common.Log;
 using Lykke.SlackNotifications;
@@ -10,6 +10,7 @@ namespace Lykke.Logs
     public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {
         private readonly ISlackNotificationsSender _slackNotificationsSender;
+        private readonly ILog _lastResortLog;
         private readonly string _component;
 
         public LykkeLogToAzureSlackNotificationsManager(
@@ -19,6 +20,7 @@ namespace Lykke.Logs
             : base(componentName, lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
+            _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
         }
 
@@ -28,6 +30,7 @@ namespace Lykke.Logs
             : base(lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
+            _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
         }
 
@@ -38,49 +41,56 @@ namespace Lykke.Logs
 
         protected override async Task Consume(LogEntity entry)
         {
-            if (entry.Level != LykkeLogToAzureStorage.ErrorType
-                && entry.Level != LykkeLogToAzureStorage.FatalErrorType
-                && entry.Level != LykkeLogToAzureStorage.WarningType
-                && entry.Level != LykkeLogToAzureStorage.MonitorType)
-                return;
-
-            var componentName = GetComponentName(entry);
-
-            switch (entry.Level)
+            try
             {
-                case LykkeLogToAzureStorage.ErrorType:
-                case LykkeLogToAzureStorage.FatalErrorType:
+                if (entry.Level != LykkeLogToAzureStorage.ErrorType
+                    && entry.Level != LykkeLogToAzureStorage.FatalErrorType
+                    && entry.Level != LykkeLogToAzureStorage.WarningType
+                    && entry.Level != LykkeLogToAzureStorage.MonitorType)
+                    return;
+
+                var componentName = GetComponentName(entry);
+
+                switch (entry.Level)
                 {
-                    var message = entry.Context != null
-                        ? $"{entry.Msg} : {entry.Stack} : {entry.Context}"
-                        : $"{entry.Msg} : {entry.Stack}";
+                    case LykkeLogToAzureStorage.ErrorType:
+                    case LykkeLogToAzureStorage.FatalErrorType:
+                    {
+                        var message = entry.Context != null
+                            ? $"{entry.Msg} : {entry.Stack} : {entry.Context}"
+                            : $"{entry.Msg} : {entry.Stack}";
 
-                    await _slackNotificationsSender.SendErrorAsync(message, componentName);
+                        await _slackNotificationsSender.SendErrorAsync(message, componentName);
 
-                    break;
+                        break;
+                    }
+
+                    case LykkeLogToAzureStorage.WarningType:
+                    {
+                        var message = entry.Context != null
+                            ? $"{entry.Msg} : {entry.Context}"
+                            : entry.Msg;
+
+                        await _slackNotificationsSender.SendWarningAsync(message, componentName);
+
+                        break;
+                    }
+
+                    case LykkeLogToAzureStorage.MonitorType:
+                    {
+                        var message = entry.Context != null
+                            ? $"{entry.Msg} : {entry.Context}"
+                            : entry.Msg;
+
+                        await _slackNotificationsSender.SendMonitorAsync(message, componentName);
+
+                        break;
+                    }
                 }
-
-                case LykkeLogToAzureStorage.WarningType:
-                {
-                    var message = entry.Context != null
-                        ? $"{entry.Msg} : {entry.Context}"
-                        : entry.Msg;
-
-                    await _slackNotificationsSender.SendWarningAsync(message, componentName);
-
-                    break;
-                }
-
-                case LykkeLogToAzureStorage.MonitorType:
-                {
-                    var message = entry.Context != null
-                        ? $"{entry.Msg} : {entry.Context}"
-                        : entry.Msg;
-
-                    await _slackNotificationsSender.SendMonitorAsync(message, componentName);
-
-                    break;
-                }
+            }
+            catch (Exception ex)
+            {
+                await _lastResortLog.WriteErrorAsync("Send log entries to the Slack", "", ex);
             }
         }
 
