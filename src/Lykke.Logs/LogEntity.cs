@@ -35,10 +35,10 @@ namespace Lykke.Logs
                 Version = AppEnvironment.Version,
                 Component = component,
                 Process = process,
-                Context = context,
+                Context = Truncate(context),
                 Type = type,
-                Stack = stack,
-                Msg = msg
+                Stack = Truncate(stack),
+                Msg = Truncate(msg)
             };
         }
 
@@ -52,6 +52,22 @@ namespace Lykke.Logs
             return retryNumber == 0 
                 ? $"{dateTime:HH:mm:ss.fffffff}.{itemNumber:000}" 
                 : $"{dateTime:HH:mm:ss.fffffff}.{itemNumber:000}.{retryNumber:000}";
+        }
+
+        private static string Truncate(string str)
+        {
+            // See: https://blogs.msdn.microsoft.com/avkashchauhan/2011/11/30/how-the-size-of-an-entity-is-caclulated-in-windows-azure-table-storage/
+            // String – # of Characters * 2 bytes + 4 bytes for length of string
+            // Max coumn size is 64 Kb, so max string len is (65536 - 4) / 2 = 32766
+            // 3 - is for "..."
+            const int maxLength = 32766 - 3;
+
+            if (str.Length > maxLength)
+            {
+                return string.Concat(str.Substring(0, maxLength), "...");
+            }
+
+            return str;
         }
     }
 }
