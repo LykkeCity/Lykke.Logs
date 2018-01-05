@@ -8,6 +8,7 @@ namespace Lykke.Logs
         public DateTime DateTime { get; set; }
         public string Level { get; set; }
         public string Env { get; set; }
+        public string AppName { get; set; }
         public string Version { get; set; }
         public string Component { get; set; }
         public string Process { get; set; }
@@ -32,6 +33,7 @@ namespace Lykke.Logs
                 DateTime = dateTime,
                 Level = level,
                 Env = AppEnvironment.EnvInfo,
+                AppName = AppEnvironment.Name,
                 Version = AppEnvironment.Version,
                 Component = component,
                 Process = process,
