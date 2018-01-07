@@ -58,6 +58,11 @@ namespace Lykke.Logs
 
         private static string Truncate(string str)
         {
+            if (str == null)
+            {
+                return null;
+            }
+
             // See: https://blogs.msdn.microsoft.com/avkashchauhan/2011/11/30/how-the-size-of-an-entity-is-caclulated-in-windows-azure-table-storage/
             // String – # of Characters * 2 bytes + 4 bytes for length of string
             // Max coumn size is 64 Kb, so max string len is (65536 - 4) / 2 = 32766
