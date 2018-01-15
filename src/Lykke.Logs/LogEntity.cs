@@ -16,7 +16,7 @@ namespace Lykke.Logs
         public string Type { get; set; }
         public string Stack { get; set; }
         public string Msg { get; set; }
-        
+
         public static LogEntity CreateWithoutRowKey(
             string level,
             string component,
@@ -41,6 +41,33 @@ namespace Lykke.Logs
                 Type = type,
                 Stack = Truncate(stack),
                 Msg = Truncate(msg)
+            };
+        }
+
+        public static LogEntity CreateNotTruncated(
+            string level,
+            string component,
+            string process,
+            string context,
+            string type,
+            string stack,
+            string msg,
+            DateTime dateTime)
+        {
+            return new LogEntity
+            {
+                PartitionKey = GeneratePartitionKey(dateTime),
+                DateTime = dateTime,
+                Level = level,
+                Env = AppEnvironment.EnvInfo,
+                AppName = AppEnvironment.Name,
+                Version = AppEnvironment.Version,
+                Component = component,
+                Process = process,
+                Context = context,
+                Type = type,
+                Stack = stack,
+                Msg = msg,
             };
         }
 

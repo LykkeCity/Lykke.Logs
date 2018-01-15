@@ -268,7 +268,8 @@ namespace Lykke.Logs
                     ++_currentBatchSize;
                 }
 
-                _slackNotificationsManager?.SendNotification(newEntity);
+                _slackNotificationsManager?.SendNotification(
+                    LogEntity.CreateNotTruncated(level, component, process, context, type, stack, msg, dt));
             }
             catch (Exception ex)
             {
