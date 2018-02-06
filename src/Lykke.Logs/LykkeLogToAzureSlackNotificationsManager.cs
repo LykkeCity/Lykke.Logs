@@ -25,7 +25,7 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
-            _logLevels = new List<string>
+            _logLevels = new string[4]
             {
                 LykkeLogToAzureStorage.ErrorType,
                 LykkeLogToAzureStorage.FatalErrorType,
@@ -42,7 +42,7 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
-            _logLevels = new List<string>
+            _logLevels = new string[4]
             {
                 LykkeLogToAzureStorage.ErrorType,
                 LykkeLogToAzureStorage.FatalErrorType,
@@ -60,7 +60,7 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
-            _logLevels = logLevels ?? new List<string>(0);
+            _logLevels = logLevels ?? new string[0];
         }
 
         public void SendNotification(LogEntity entry)
