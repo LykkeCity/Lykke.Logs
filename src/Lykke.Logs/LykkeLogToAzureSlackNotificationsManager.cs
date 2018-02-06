@@ -14,7 +14,7 @@ namespace Lykke.Logs
         private readonly ISlackNotificationsSender _slackNotificationsSender;
         private readonly ILog _lastResortLog;
         private readonly string _component;
-        private readonly IEnumerable<string> _logLevels;
+        private readonly HashSet<string> _logLevels;
 
         public LykkeLogToAzureSlackNotificationsManager(
             string componentName,
@@ -25,13 +25,7 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
-            _logLevels = new string[4]
-            {
-                LykkeLogToAzureStorage.ErrorType,
-                LykkeLogToAzureStorage.FatalErrorType,
-                LykkeLogToAzureStorage.WarningType,
-                LykkeLogToAzureStorage.MonitorType,
-            };
+            _logLevels = DefaultLogLevelsInit();
         }
 
         public LykkeLogToAzureSlackNotificationsManager(
@@ -42,25 +36,19 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
-            _logLevels = new string[4]
-            {
-                LykkeLogToAzureStorage.ErrorType,
-                LykkeLogToAzureStorage.FatalErrorType,
-                LykkeLogToAzureStorage.WarningType,
-                LykkeLogToAzureStorage.MonitorType,
-            };
+            _logLevels = DefaultLogLevelsInit();
         }
 
         public LykkeLogToAzureSlackNotificationsManager(
             ISlackNotificationsSender slackNotificationsSender,
-            IEnumerable<string> logLevels,
+            HashSet<string> logLevels,
             ILog lastResortLog = null)
             : base(lastResortLog)
         {
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
-            _logLevels = logLevels ?? new string[0];
+            _logLevels = logLevels ?? new HashSet<string>();
         }
 
         public void SendNotification(LogEntity entry)
@@ -72,7 +60,7 @@ namespace Lykke.Logs
         {
             try
             {
-                if (_logLevels.All(l => l != entry.Level))
+                if (!_logLevels.Contains(entry.Level))
                     return;
 
                 var componentName = GetComponentName(entry);
@@ -137,6 +125,17 @@ namespace Lykke.Logs
             }
 
             return sb.ToString();
+        }
+
+        private HashSet<string> DefaultLogLevelsInit()
+        {
+            return new HashSet<string>
+            {
+                LykkeLogToAzureStorage.ErrorType,
+                LykkeLogToAzureStorage.FatalErrorType,
+                LykkeLogToAzureStorage.WarningType,
+                LykkeLogToAzureStorage.MonitorType,
+            };
         }
     }
 }
