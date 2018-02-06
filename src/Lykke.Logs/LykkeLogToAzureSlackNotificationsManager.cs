@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Common;
@@ -12,6 +14,7 @@ namespace Lykke.Logs
         private readonly ISlackNotificationsSender _slackNotificationsSender;
         private readonly ILog _lastResortLog;
         private readonly string _component;
+        private readonly IEnumerable<string> _logLevels;
 
         public LykkeLogToAzureSlackNotificationsManager(
             string componentName,
@@ -22,6 +25,13 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
+            _logLevels = new List<string>
+            {
+                LykkeLogToAzureStorage.ErrorType,
+                LykkeLogToAzureStorage.FatalErrorType,
+                LykkeLogToAzureStorage.WarningType,
+                LykkeLogToAzureStorage.MonitorType,
+            };
         }
 
         public LykkeLogToAzureSlackNotificationsManager(
@@ -32,6 +42,25 @@ namespace Lykke.Logs
             _slackNotificationsSender = slackNotificationsSender;
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = AppEnvironment.Name;
+            _logLevels = new List<string>
+            {
+                LykkeLogToAzureStorage.ErrorType,
+                LykkeLogToAzureStorage.FatalErrorType,
+                LykkeLogToAzureStorage.WarningType,
+                LykkeLogToAzureStorage.MonitorType,
+            };
+        }
+
+        public LykkeLogToAzureSlackNotificationsManager(
+            ISlackNotificationsSender slackNotificationsSender,
+            IEnumerable<string> logLevels,
+            ILog lastResortLog = null)
+            : base(lastResortLog)
+        {
+            _slackNotificationsSender = slackNotificationsSender;
+            _lastResortLog = lastResortLog ?? new LogToConsole();
+            _component = AppEnvironment.Name;
+            _logLevels = logLevels ?? new List<string>(0);
         }
 
         public void SendNotification(LogEntity entry)
@@ -43,10 +72,7 @@ namespace Lykke.Logs
         {
             try
             {
-                if (entry.Level != LykkeLogToAzureStorage.ErrorType
-                    && entry.Level != LykkeLogToAzureStorage.FatalErrorType
-                    && entry.Level != LykkeLogToAzureStorage.WarningType
-                    && entry.Level != LykkeLogToAzureStorage.MonitorType)
+                if (_logLevels.All(l => l != entry.Level))
                     return;
 
                 var componentName = GetComponentName(entry);
