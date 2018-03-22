@@ -158,7 +158,7 @@ namespace Lykke.Logs
 
         public Task WriteWarningAsync(string component, string process, string context, string info, Exception ex, DateTime? dateTime = null)
         {
-            return Insert(WarningType, component, process, context, ex.GetType().ToString(), ex.ToAsyncString(), info, dateTime);
+            return Insert(WarningType, component, process, context, ex?.GetType().ToString(), ex?.ToAsyncString(), info, dateTime);
         }
 
         public Task WriteErrorAsync(string component, string process, string context, Exception exception,
@@ -169,8 +169,8 @@ namespace Lykke.Logs
                 component, 
                 process, 
                 context, 
-                exception.GetType().ToString(), 
-                exception.ToAsyncString(),
+                exception?.GetType().ToString(), 
+                exception?.ToAsyncString(),
                 GetExceptionMessage(exception), 
                 dateTime);
         }
@@ -183,8 +183,8 @@ namespace Lykke.Logs
                 component, 
                 process, 
                 context, 
-                exception.GetType().ToString(),
-                exception.ToAsyncString(), 
+                exception?.GetType().ToString(),
+                exception?.ToAsyncString(), 
                 GetExceptionMessage(exception),
                 dateTime);
         }
@@ -291,6 +291,11 @@ namespace Lykke.Logs
 
         private static string GetExceptionMessage(Exception exception)
         {
+            if (exception == null)
+            {
+                return null;
+            }
+
             var ex = exception;
             var sb = new StringBuilder();
 
