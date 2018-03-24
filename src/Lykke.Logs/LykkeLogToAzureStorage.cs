@@ -46,9 +46,8 @@ namespace Lykke.Logs
             TimeSpan? maxBatchLifetime = null,
             int batchSizeThreshold = 100,
             bool ownPersistenceManager = true,
-            bool ownSlackNotificationsManager = true) :
-
-            base(applicationName, periodMs: 20, log: lastResortLog ?? new EmptyLog())
+            bool ownSlackNotificationsManager = true)
+            : base(applicationName, periodMs: 20, log: lastResortLog ?? new EmptyLog())
         {
             _persistenceManager = persistenceManager;
             _slackNotificationsManager = slackNotificationsManager;
@@ -59,6 +58,8 @@ namespace Lykke.Logs
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
 
             _component = AppEnvironment.Name;
+
+            DisableTelemetry();
 
             StartNewBatch();
         }
@@ -89,6 +90,8 @@ namespace Lykke.Logs
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
 
             _component = AppEnvironment.Name;
+
+            DisableTelemetry();
 
             StartNewBatch();
         }
