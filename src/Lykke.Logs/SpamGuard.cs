@@ -5,7 +5,7 @@ namespace Lykke.Logs
 {
     internal class SpamGuard
     {
-        private class LastMessageInfo
+        private struct LastMessageInfo
         {
             internal DateTime Time { get; set; }
             internal string Message { get; set; }
@@ -17,23 +17,21 @@ namespace Lykke.Logs
         internal bool IsSameMessage(LogLevel level, string message)
         {
             var now = DateTime.UtcNow;
-            if (_lastMessages.TryGetValue(level, out LastMessageInfo lastMessage))
-            {
-                if (lastMessage.Message == message)
+            bool isSameMessage = false;
+            _lastMessages.AddOrUpdate(
+                level,
+                new LastMessageInfo { Time = now, Message = message },
+                (l, c) =>
                 {
-                    if (now - lastMessage.Time < _sameMessageMutePeriod)
-                        return true;
-                }
-                else
-                {
-                    _lastMessages.TryUpdate(level, new LastMessageInfo { Time = now, Message = message }, lastMessage);
-                }
-            }
-            else
-            {
-                _lastMessages.TryAdd(level, new LastMessageInfo { Time = now, Message = message });
-            }
-            return false;
+                    if (now - c.Time < _sameMessageMutePeriod)
+                    {
+                        isSameMessage = true;
+                        return c;
+                    }
+                    return new LastMessageInfo { Time = now, Message = message };
+                });
+
+            return isSameMessage;
         }
     }
 }
