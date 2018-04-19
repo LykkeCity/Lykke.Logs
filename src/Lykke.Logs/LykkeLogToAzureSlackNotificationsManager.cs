@@ -15,9 +15,7 @@ namespace Lykke.Logs
         private readonly ILog _lastResortLog;
         private readonly string _component;
         private readonly HashSet<string> _logLevels;
-        private readonly TimeSpan _sameMessageMutePeriod = TimeSpan.FromSeconds(60);
-        private readonly ConcurrentDictionary<LogLevel, DateTime> _lastTimes = new ConcurrentDictionary<LogLevel, DateTime>();
-        private readonly ConcurrentDictionary<LogLevel, string> _lastMessages = new ConcurrentDictionary<LogLevel, string>();
+        private readonly SpamGuard _spamGuard = new SpamGuard();
 
         public LykkeLogToAzureSlackNotificationsManager(
             string componentName,
@@ -84,7 +82,7 @@ namespace Lykke.Logs
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Stack} : {entry.Context}"
                             : $"{entry.Msg} : {entry.Stack}";
-                        if (IsSameMessage(LogLevel.Error, message))
+                        if (_spamGuard.IsSameMessage(LogLevel.Error, message))
                             break;
 
                         await _slackNotificationsSender.SendErrorAsync(message, componentName);
@@ -96,7 +94,7 @@ namespace Lykke.Logs
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Context}"
                             : entry.Msg;
-                        if (IsSameMessage(LogLevel.Warning, message))
+                        if (_spamGuard.IsSameMessage(LogLevel.Warning, message))
                             break;
 
                         await _slackNotificationsSender.SendWarningAsync(message, componentName);
@@ -108,7 +106,7 @@ namespace Lykke.Logs
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Context}"
                             : entry.Msg;
-                        if (IsSameMessage(LogLevel.Monitoring, message))
+                        if (_spamGuard.IsSameMessage(LogLevel.Monitoring, message))
                             break;
 
                         await _slackNotificationsSender.SendMonitorAsync(message, componentName);
@@ -150,27 +148,6 @@ namespace Lykke.Logs
                 LykkeLogToAzureStorage.WarningType,
                 LykkeLogToAzureStorage.MonitorType,
             };
-        }
-
-        private bool IsSameMessage(LogLevel level, string message)
-        {
-            var now = DateTime.UtcNow;
-            if (_lastTimes.TryGetValue(level, out DateTime lastTime))
-            {
-                if (_lastMessages.TryGetValue(level, out string lastMessage))
-                {
-                    if (lastMessage == message && now - lastTime < _sameMessageMutePeriod)
-                        return true;
-                    _lastMessages.TryUpdate(level, message, lastMessage);
-                }
-                _lastTimes.TryUpdate(level, now, lastTime);
-            }
-            else
-            {
-                _lastTimes.TryAdd(level, now);
-                _lastMessages.TryAdd(level, message);
-            }
-            return false;
         }
     }
 }

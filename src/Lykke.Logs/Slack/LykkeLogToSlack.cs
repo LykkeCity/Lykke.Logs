@@ -22,9 +22,7 @@ namespace Lykke.Logs.Slack
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
         private readonly string _componentNamePrefix;
-        private readonly TimeSpan _sameMessageMutePeriod = TimeSpan.FromSeconds(60);
-        private readonly ConcurrentDictionary<LogLevel, DateTime> _lastTimes = new ConcurrentDictionary<LogLevel, DateTime>();
-        private readonly ConcurrentDictionary<LogLevel, string> _lastMessages = new ConcurrentDictionary<LogLevel, string>();
+        private readonly SpamGuard _spamGuard = new SpamGuard();
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
@@ -54,7 +52,7 @@ namespace Lykke.Logs.Slack
             if (_isInfoEnabled)
             {
                 var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
-                if (IsSameMessage(LogLevel.Info, message))
+                if (_spamGuard.IsSameMessage(LogLevel.Info, message))
                     return Task.CompletedTask;
 
                 return _sender.SendAsync(_channel, ":information_source:", message);
@@ -68,7 +66,7 @@ namespace Lykke.Logs.Slack
             if (_isMonitorEnabled)
             {
                 var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
-                if (IsSameMessage(LogLevel.Monitoring, message))
+                if (_spamGuard.IsSameMessage(LogLevel.Monitoring, message))
                     return Task.CompletedTask;
 
                 return _sender.SendAsync(_channel, ":loudspeaker:", message);
@@ -82,7 +80,7 @@ namespace Lykke.Logs.Slack
             if (_isWarningEnabled)
             {
                 var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
-                if (IsSameMessage(LogLevel.Warning, message))
+                if (_spamGuard.IsSameMessage(LogLevel.Warning, message))
                     return Task.CompletedTask;
 
                 return _sender.SendAsync(_channel, ":warning:", message);
@@ -97,7 +95,7 @@ namespace Lykke.Logs.Slack
             if (_isWarningEnabled)
             {
                 var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
-                if (IsSameMessage(LogLevel.Warning, message))
+                if (_spamGuard.IsSameMessage(LogLevel.Warning, message))
                     return Task.CompletedTask;
 
                 return _sender.SendAsync(_channel, ":warning:", message);
@@ -111,7 +109,7 @@ namespace Lykke.Logs.Slack
             if (_isErrorEnabled)
             {
                 var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
-                if (IsSameMessage(LogLevel.Error, message))
+                if (_spamGuard.IsSameMessage(LogLevel.Error, message))
                     return Task.CompletedTask;
 
                 return _sender.SendAsync(_channel, ":exclamation:", message);
@@ -180,27 +178,6 @@ namespace Lykke.Logs.Slack
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
                 return string.Concat(_componentNamePrefix, " : ", component);
             return _componentNamePrefix;
-        }
-
-        private bool IsSameMessage(LogLevel level, string message)
-        {
-            var now = DateTime.UtcNow;
-            if (_lastTimes.TryGetValue(level, out DateTime lastTime))
-            {
-                if (_lastMessages.TryGetValue(level, out string lastMessage))
-                {
-                    if (lastMessage == message && now - lastTime < _sameMessageMutePeriod)
-                        return true;
-                    _lastMessages.TryUpdate(level, message, lastMessage);
-                }
-                _lastTimes.TryUpdate(level, now, lastTime);
-            }
-            else
-            {
-                _lastTimes.TryAdd(level, now);
-                _lastMessages.TryAdd(level, message);
-            }
-            return false;
         }
     }
 }
