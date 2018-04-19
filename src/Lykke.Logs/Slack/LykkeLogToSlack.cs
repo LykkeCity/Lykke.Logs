@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading.Tasks;
 using Common.Log;
@@ -21,6 +22,9 @@ namespace Lykke.Logs.Slack
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
         private readonly string _componentNamePrefix;
+        private readonly TimeSpan _sameMessageMutePeriod = TimeSpan.FromSeconds(60);
+        private readonly ConcurrentDictionary<LogLevel, DateTime> _lastTimes = new ConcurrentDictionary<LogLevel, DateTime>();
+        private readonly ConcurrentDictionary<LogLevel, string> _lastMessages = new ConcurrentDictionary<LogLevel, string>();
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
@@ -49,7 +53,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isInfoEnabled)
             {
-                return _sender.SendAsync(_channel, ":information_source:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                if (IsSameMessage(LogLevel.Info, message))
+                    return Task.CompletedTask;
+
+                return _sender.SendAsync(_channel, ":information_source:", message);
             }
 
             return Task.CompletedTask;
@@ -59,7 +67,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isMonitorEnabled)
             {
-                return _sender.SendAsync(_channel, ":loudspeaker:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                if (IsSameMessage(LogLevel.Monitoring, message))
+                    return Task.CompletedTask;
+
+                return _sender.SendAsync(_channel, ":loudspeaker:", message);
             }
 
             return Task.CompletedTask;
@@ -69,7 +81,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                if (IsSameMessage(LogLevel.Warning, message))
+                    return Task.CompletedTask;
+
+                return _sender.SendAsync(_channel, ":warning:", message);
             }
 
             return Task.CompletedTask;
@@ -80,7 +96,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
+                if (IsSameMessage(LogLevel.Warning, message))
+                    return Task.CompletedTask;
+
+                return _sender.SendAsync(_channel, ":warning:", message);
             }
 
             return Task.CompletedTask;
@@ -90,7 +110,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":exclamation:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
+                if (IsSameMessage(LogLevel.Error, message))
+                    return Task.CompletedTask;
+
+                return _sender.SendAsync(_channel, ":exclamation:", message);
             }
 
             return Task.CompletedTask;
@@ -154,13 +178,29 @@ namespace Lykke.Logs.Slack
         private string GetComponentName(string component)
         {
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
-            {
                 return string.Concat(_componentNamePrefix, " : ", component);
+            return _componentNamePrefix;
+        }
+
+        private bool IsSameMessage(LogLevel level, string message)
+        {
+            var now = DateTime.UtcNow;
+            if (_lastTimes.TryGetValue(level, out DateTime lastTime))
+            {
+                if (_lastMessages.TryGetValue(level, out string lastMessage))
+                {
+                    if (lastMessage == message && now - lastTime < _sameMessageMutePeriod)
+                        return true;
+                    _lastMessages.TryUpdate(level, message, lastMessage);
+                }
+                _lastTimes.TryUpdate(level, now, lastTime);
             }
             else
             {
-                return _componentNamePrefix;
+                _lastTimes.TryAdd(level, now);
+                _lastMessages.TryAdd(level, message);
             }
+            return false;
         }
     }
 }
