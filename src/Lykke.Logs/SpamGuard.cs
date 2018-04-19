@@ -5,38 +5,33 @@ namespace Lykke.Logs
 {
     internal class SpamGuard
     {
+        private class LastMessageInfo
+        {
+            internal DateTime Time { get; set; }
+            internal string Message { get; set; }
+        }
+
         private readonly TimeSpan _sameMessageMutePeriod = TimeSpan.FromSeconds(60);
-        private readonly ConcurrentDictionary<LogLevel, DateTime> _lastTimes = new ConcurrentDictionary<LogLevel, DateTime>();
-        private readonly ConcurrentDictionary<LogLevel, string> _lastMessages = new ConcurrentDictionary<LogLevel, string>();
+        private readonly ConcurrentDictionary<LogLevel, LastMessageInfo> _lastMessages = new ConcurrentDictionary<LogLevel, LastMessageInfo>();
 
         internal bool IsSameMessage(LogLevel level, string message)
         {
             var now = DateTime.UtcNow;
-            if (_lastTimes.TryGetValue(level, out DateTime lastTime))
+            if (_lastMessages.TryGetValue(level, out LastMessageInfo lastMessage))
             {
-                if (_lastMessages.TryGetValue(level, out string lastMessage))
+                if (lastMessage.Message == message)
                 {
-                    if (lastMessage == message)
-                    {
-                        if (now - lastTime < _sameMessageMutePeriod)
-                            return true;
-                    }
-                    else
-                    {
-                        _lastMessages.TryUpdate(level, message, lastMessage);
-                    }
+                    if (now - lastMessage.Time < _sameMessageMutePeriod)
+                        return true;
                 }
                 else
                 {
-                    _lastMessages.TryAdd(level, message);
+                    _lastMessages.TryUpdate(level, new LastMessageInfo { Time = now, Message = message }, lastMessage);
                 }
-                if (now != lastTime)
-                    _lastTimes.TryUpdate(level, now, lastTime);
             }
             else
             {
-                _lastTimes.TryAdd(level, now);
-                _lastMessages.TryAdd(level, message);
+                _lastMessages.TryAdd(level, new LastMessageInfo { Time = now, Message = message });
             }
             return false;
         }
