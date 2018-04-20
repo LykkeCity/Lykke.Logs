@@ -47,6 +47,12 @@ namespace Lykke.Logs.Slack
             return new LykkeLogToSlack(sender, channel, logLevel);
         }
 
+        /// <summary>
+        /// Sets spam same mute period for all provided log levels.
+        /// </summary>
+        /// <param name="levels">Log levels to be muted in case of spam</param>
+        /// <param name="mutePeriod">Mute period for spam</param>
+        /// <returns>Original instance - for calls chain</returns>
         public LykkeLogToSlack SetSpamMutePeriodForLevels(IEnumerable<LogLevel> levels, TimeSpan mutePeriod)
         {
             foreach (var level in levels)
@@ -56,6 +62,12 @@ namespace Lykke.Logs.Slack
             return this;
         }
 
+        /// <summary>
+        /// Sets spam same mute period for provided log level.
+        /// </summary>
+        /// <param name="level">Log level to be muted in case of spam</param>
+        /// <param name="mutePeriod">Mute period for spam</param>
+        /// <returns>Original instance - for calls chain</returns>
         public LykkeLogToSlack SetSpamMutePeriod(LogLevel level, TimeSpan mutePeriod)
         {
             _spamGuard.SetMutePeriod(level, mutePeriod);
