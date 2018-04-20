@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,24 +31,32 @@ namespace Lykke.Logs
         public LykkeLogToAzureSlackNotificationsManager(
             ISlackNotificationsSender slackNotificationsSender,
             ILog lastResortLog = null)
-            : base(lastResortLog)
+            : this(AppEnvironment.Name, slackNotificationsSender, lastResortLog)
         {
-            _slackNotificationsSender = slackNotificationsSender;
-            _lastResortLog = lastResortLog ?? new LogToConsole();
-            _component = AppEnvironment.Name;
-            _logLevels = DefaultLogLevelsInit();
         }
 
         public LykkeLogToAzureSlackNotificationsManager(
             ISlackNotificationsSender slackNotificationsSender,
             HashSet<string> logLevels,
             ILog lastResortLog = null)
-            : base(lastResortLog)
+            : this(AppEnvironment.Name, slackNotificationsSender, lastResortLog)
         {
-            _slackNotificationsSender = slackNotificationsSender;
-            _lastResortLog = lastResortLog ?? new LogToConsole();
-            _component = AppEnvironment.Name;
             _logLevels = logLevels ?? new HashSet<string>();
+        }
+
+        public LykkeLogToAzureSlackNotificationsManager SetSpamMutePeriodForLevels(IEnumerable<LogLevel> levels, TimeSpan mutePeriod)
+        {
+            foreach (var level in levels)
+            {
+                _spamGuard.SetMutePeriod(level, mutePeriod);
+            }
+            return this;
+        }
+
+        public LykkeLogToAzureSlackNotificationsManager SetSpamMutePeriod(LogLevel level, TimeSpan mutePeriod)
+        {
+            _spamGuard.SetMutePeriod(level, mutePeriod);
+            return this;
         }
 
         public void SendNotification(LogEntity entry)
@@ -79,36 +86,36 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.ErrorType:
                     {
+                        if (_spamGuard.IsSameMessage(LogLevel.Error, componentName, entry.Process, entry.Msg))
+                            break;
+
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Stack} : {entry.Context}"
                             : $"{entry.Msg} : {entry.Stack}";
-                        if (_spamGuard.IsSameMessage(LogLevel.Error, message))
-                            break;
-
                         await _slackNotificationsSender.SendErrorAsync(message, componentName);
                         break;
                     }
 
                     case LykkeLogToAzureStorage.WarningType:
                     {
+                        if (_spamGuard.IsSameMessage(LogLevel.Warning, componentName, entry.Process, entry.Msg))
+                            break;
+
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Context}"
                             : entry.Msg;
-                        if (_spamGuard.IsSameMessage(LogLevel.Warning, message))
-                            break;
-
                         await _slackNotificationsSender.SendWarningAsync(message, componentName);
                         break;
                     }
 
                     case LykkeLogToAzureStorage.MonitorType:
                     {
+                        if (_spamGuard.IsSameMessage(LogLevel.Monitoring, componentName, entry.Process, entry.Msg))
+                            break;
+
                         var message = entry.Context != null
                             ? $"{entry.Msg} : {entry.Context}"
                             : entry.Msg;
-                        if (_spamGuard.IsSameMessage(LogLevel.Monitoring, message))
-                            break;
-
                         await _slackNotificationsSender.SendMonitorAsync(message, componentName);
                         break;
                     }
