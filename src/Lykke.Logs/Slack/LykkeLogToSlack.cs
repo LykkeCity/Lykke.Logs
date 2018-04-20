@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Common.Log;
@@ -21,6 +22,7 @@ namespace Lykke.Logs.Slack
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
         private readonly string _componentNamePrefix;
+        private readonly SpamGuard _spamGuard = new SpamGuard();
 
         private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
         {
@@ -45,11 +47,39 @@ namespace Lykke.Logs.Slack
             return new LykkeLogToSlack(sender, channel, logLevel);
         }
 
+        /// <summary>
+        /// Sets spam same mute period for all provided log levels.
+        /// </summary>
+        /// <param name="levels">Log levels to be muted in case of spam</param>
+        /// <param name="mutePeriod">Mute period for spam</param>
+        /// <returns>Original instance - for calls chain</returns>
+        public LykkeLogToSlack SetSpamMutePeriodForLevels(IEnumerable<LogLevel> levels, TimeSpan mutePeriod)
+        {
+            foreach (var level in levels)
+            {
+                _spamGuard.SetMutePeriod(level, mutePeriod);
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Sets spam same mute period for provided log level.
+        /// </summary>
+        /// <param name="level">Log level to be muted in case of spam</param>
+        /// <param name="mutePeriod">Mute period for spam</param>
+        /// <returns>Original instance - for calls chain</returns>
+        public LykkeLogToSlack SetSpamMutePeriod(LogLevel level, TimeSpan mutePeriod)
+        {
+            _spamGuard.SetMutePeriod(level, mutePeriod);
+            return this;
+        }
+
         public Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
             if (_isInfoEnabled)
             {
-                return _sender.SendAsync(_channel, ":information_source:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                return _sender.SendAsync(_channel, ":information_source:", message);
             }
 
             return Task.CompletedTask;
@@ -59,7 +89,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isMonitorEnabled)
             {
-                return _sender.SendAsync(_channel, ":loudspeaker:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                if (_spamGuard.IsSameMessage(LogLevel.Monitoring, component, process, info))
+                    return Task.CompletedTask;
+
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                return _sender.SendAsync(_channel, ":loudspeaker:", message);
             }
 
             return Task.CompletedTask;
@@ -69,7 +103,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {info} : {context}");
+                if (_spamGuard.IsSameMessage(LogLevel.Warning, component, process, info))
+                    return Task.CompletedTask;
+
+                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                return _sender.SendAsync(_channel, ":warning:", message);
             }
 
             return Task.CompletedTask;
@@ -80,7 +118,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                return _sender.SendAsync(_channel, ":warning:", $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}");
+                if (_spamGuard.IsSameMessage(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
+                    return Task.CompletedTask;
+
+                var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
+                return _sender.SendAsync(_channel, ":warning:", message);
             }
 
             return Task.CompletedTask;
@@ -90,7 +132,11 @@ namespace Lykke.Logs.Slack
         {
             if (_isErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":exclamation:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
+                if (_spamGuard.IsSameMessage(LogLevel.Error, component, process, exception.Message))
+                    return Task.CompletedTask;
+
+                var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
+                return _sender.SendAsync(_channel, ":exclamation:", message);
             }
 
             return Task.CompletedTask;
@@ -154,13 +200,8 @@ namespace Lykke.Logs.Slack
         private string GetComponentName(string component)
         {
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
-            {
                 return string.Concat(_componentNamePrefix, " : ", component);
-            }
-            else
-            {
-                return _componentNamePrefix;
-            }
+            return _componentNamePrefix;
         }
     }
 }
