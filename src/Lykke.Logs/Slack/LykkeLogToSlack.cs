@@ -47,26 +47,14 @@ namespace Lykke.Logs.Slack
         }
 
         /// <summary>
-        /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>,
-        /// to the given <paramref name="channel"/>, using given <paramref name="sender"/>
-        /// </summary>
-        public static ILog Create(
-            ISlackNotificationsSender sender,
-            string channel,
-            LogLevel logLevel = LogLevel.All)
-        {
-            return new LykkeLogToSlack(sender, channel, logLevel, false);
-        }
-
-        /// <summary>
         /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>, to the given <paramref name="channel"/>,
         /// using given <paramref name="sender"/> with a flag to disable antispam protection
         /// </summary>
         public static ILog Create(
             ISlackNotificationsSender sender,
             string channel,
-            bool disableAntiSpam,
-            LogLevel logLevel = LogLevel.All)
+            LogLevel logLevel = LogLevel.All,
+            bool disableAntiSpam = false)
         {
             return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam);
         }

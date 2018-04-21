@@ -61,6 +61,20 @@ namespace Lykke.Logs
         }
 
         /// <summary>
+        /// C-tor with a standard component name and deafult log levels collection and antispam protection control flag.
+        /// </summary>
+        /// <param name="slackNotificationsSender">Sender for slack messages</param>
+        /// <param name="disableAntiSpam">Flag for antispam protection control</param>
+        /// <param name="lastResortLog">Logger</param>
+        public LykkeLogToAzureSlackNotificationsManager(
+            ISlackNotificationsSender slackNotificationsSender,
+            bool disableAntiSpam,
+            ILog lastResortLog = null)
+            : this(AppEnvironment.Name, slackNotificationsSender, disableAntiSpam, lastResortLog)
+        {
+        }
+
+        /// <summary>
         /// C-tor with a custom component name and deafult log levels collection and antispam protection control flag.
         /// </summary>
         /// <param name="componentName">Custom component name</param>
