@@ -20,7 +20,7 @@ namespace Lykke.Logs
         private readonly SpamGuard _spamGuard = new SpamGuard();
 
         /// <summary>
-        /// C-tor with custom component name and log levels collection.
+        /// C-tor with a custom component name and deafult log levels collection.
         /// </summary>
         /// <param name="componentName">Custom component name</param>
         /// <param name="slackNotificationsSender">Sender for slack messages</param>
@@ -29,28 +29,24 @@ namespace Lykke.Logs
             string componentName,
             ISlackNotificationsSender slackNotificationsSender,
             ILog lastResortLog = null)
-            : base(componentName, lastResortLog)
+            : this(componentName, slackNotificationsSender, false, lastResortLog)
         {
-            _slackNotificationsSender = slackNotificationsSender;
-            _lastResortLog = lastResortLog ?? new LogToConsole();
-            _component = componentName;
-            _logLevels = DefaultLogLevelsInit();
         }
 
         /// <summary>
-        /// C-tor with standard component name and log levels collection.
+        /// C-tor with standard component name and default log levels collection.
         /// </summary>
         /// <param name="slackNotificationsSender">Sender for slack messages</param>
         /// <param name="lastResortLog">Logger</param>
         public LykkeLogToAzureSlackNotificationsManager(
             ISlackNotificationsSender slackNotificationsSender,
             ILog lastResortLog = null)
-            : this(AppEnvironment.Name, slackNotificationsSender, lastResortLog)
+            : this(AppEnvironment.Name, slackNotificationsSender, false, lastResortLog)
         {
         }
 
         /// <summary>
-        /// C-tor with standard component name and provided collection of log levels.
+        /// C-tor with standard component name and custom collection of log levels.
         /// </summary>
         /// <param name="slackNotificationsSender"></param>
         /// <param name="logLevels"></param>
@@ -59,35 +55,48 @@ namespace Lykke.Logs
             ISlackNotificationsSender slackNotificationsSender,
             HashSet<string> logLevels,
             ILog lastResortLog = null)
-            : this(AppEnvironment.Name, slackNotificationsSender, lastResortLog)
+            : this(AppEnvironment.Name, slackNotificationsSender, false, lastResortLog)
         {
             _logLevels = logLevels ?? new HashSet<string>();
         }
 
         /// <summary>
+        /// C-tor with a custom component name and deafult log levels collection and antispam protection control flag.
+        /// </summary>
+        /// <param name="componentName">Custom component name</param>
+        /// <param name="slackNotificationsSender">Sender for slack messages</param>
+        /// <param name="disableAntiSpam">Flag for antispam protection control</param>
+        /// <param name="lastResortLog">Logger</param>
+        public LykkeLogToAzureSlackNotificationsManager(
+            string componentName,
+            ISlackNotificationsSender slackNotificationsSender,
+            bool disableAntiSpam,
+            ILog lastResortLog = null)
+            : base(componentName, lastResortLog)
+        {
+            _slackNotificationsSender = slackNotificationsSender;
+            _lastResortLog = lastResortLog ?? new LogToConsole();
+            _component = componentName;
+            _logLevels = DefaultLogLevelsInit();
+
+            if (disableAntiSpam)
+                _spamGuard.DisableGuarding();
+            else
+                SetSpamMutePeriodForLevels(TimeSpan.FromMinutes(1), LogLevel.Warning, LogLevel.Error);
+        }
+
+        /// <summary>
         /// Sets spam same mute period for all provided log levels.
         /// </summary>
-        /// <param name="levels">Log levels to be muted in case of spam</param>
         /// <param name="mutePeriod">Mute period for spam</param>
+        /// <param name="levels">Log levels to be muted in case of spam</param>
         /// <returns>Original instance - for calls chain</returns>
-        public LykkeLogToAzureSlackNotificationsManager SetSpamMutePeriodForLevels(IEnumerable<LogLevel> levels, TimeSpan mutePeriod)
+        public LykkeLogToAzureSlackNotificationsManager SetSpamMutePeriodForLevels(TimeSpan mutePeriod, params LogLevel[] levels)
         {
             foreach (var level in levels)
             {
                 _spamGuard.SetMutePeriod(level, mutePeriod);
             }
-            return this;
-        }
-
-        /// <summary>
-        /// Sets spam same mute period for provided log level.
-        /// </summary>
-        /// <param name="level">Log level to be muted in case of spam</param>
-        /// <param name="mutePeriod">Mute period for spam</param>
-        /// <returns>Original instance - for calls chain</returns>
-        public LykkeLogToAzureSlackNotificationsManager SetSpamMutePeriod(LogLevel level, TimeSpan mutePeriod)
-        {
-            _spamGuard.SetMutePeriod(level, mutePeriod);
             return this;
         }
 

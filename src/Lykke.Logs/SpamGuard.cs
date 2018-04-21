@@ -17,8 +17,18 @@ namespace Lykke.Logs
         private readonly ConcurrentDictionary<LogLevel, LastMessageInfo> _lastMessages = new ConcurrentDictionary<LogLevel, LastMessageInfo>();
         private readonly Dictionary<LogLevel, TimeSpan> _mutePeriods = new Dictionary<LogLevel, TimeSpan>();
 
+        private bool _disableGuarding;
+
+        internal void DisableGuarding()
+        {
+            _disableGuarding = true;
+            _mutePeriods.Clear();
+        }
+
         internal void SetMutePeriod(LogLevel level, TimeSpan mutePeriod)
         {
+            if (_disableGuarding)
+                throw new InvalidOperationException("AntiSpam protection is disabled");
             _mutePeriods[level] = mutePeriod;
         }
 
