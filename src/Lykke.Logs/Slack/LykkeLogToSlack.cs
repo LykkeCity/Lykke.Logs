@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Common.Log;
 using JetBrains.Annotations;
+using Common.Log;
 using Lykke.SlackNotifications;
 
 namespace Lykke.Logs.Slack
@@ -24,7 +23,11 @@ namespace Lykke.Logs.Slack
         private readonly string _componentNamePrefix;
         private readonly SpamGuard _spamGuard = new SpamGuard();
 
-        private LykkeLogToSlack(ISlackNotificationsSender sender, string channel, LogLevel logLevel)
+        private LykkeLogToSlack(
+            ISlackNotificationsSender sender,
+            string channel,
+            LogLevel logLevel,
+            bool disableAntiSpam)
         {
             _sender = sender;
             _channel = channel;
@@ -36,41 +39,38 @@ namespace Lykke.Logs.Slack
             _isFatalErrorEnabled = logLevel.HasFlag(LogLevel.FatalError);
 
             _componentNamePrefix = GetComponentNamePrefix();
+
+            if (disableAntiSpam)
+                _spamGuard.DisableGuarding();
+            else
+                SetSpamMutePeriodForLevels(TimeSpan.FromMinutes(1), LogLevel.Warning, LogLevel.Error);
         }
 
         /// <summary>
-        /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>,
-        /// to the given <paramref name="channel"/>, using given <paramref name="sender"/>
+        /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>, to the given <paramref name="channel"/>,
+        /// using given <paramref name="sender"/> with a flag to disable antispam protection
         /// </summary>
-        public static ILog Create(ISlackNotificationsSender sender, string channel, LogLevel logLevel = LogLevel.All)
+        public static ILog Create(
+            ISlackNotificationsSender sender,
+            string channel,
+            LogLevel logLevel = LogLevel.All,
+            bool disableAntiSpam = false)
         {
-            return new LykkeLogToSlack(sender, channel, logLevel);
+            return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam);
         }
 
         /// <summary>
         /// Sets spam same mute period for all provided log levels.
         /// </summary>
-        /// <param name="levels">Log levels to be muted in case of spam</param>
         /// <param name="mutePeriod">Mute period for spam</param>
+        /// <param name="levels">Log levels to be muted in case of spam</param>
         /// <returns>Original instance - for calls chain</returns>
-        public LykkeLogToSlack SetSpamMutePeriodForLevels(IEnumerable<LogLevel> levels, TimeSpan mutePeriod)
+        public LykkeLogToSlack SetSpamMutePeriodForLevels(TimeSpan mutePeriod, params LogLevel[] levels)
         {
             foreach (var level in levels)
             {
                 _spamGuard.SetMutePeriod(level, mutePeriod);
             }
-            return this;
-        }
-
-        /// <summary>
-        /// Sets spam same mute period for provided log level.
-        /// </summary>
-        /// <param name="level">Log level to be muted in case of spam</param>
-        /// <param name="mutePeriod">Mute period for spam</param>
-        /// <returns>Original instance - for calls chain</returns>
-        public LykkeLogToSlack SetSpamMutePeriod(LogLevel level, TimeSpan mutePeriod)
-        {
-            _spamGuard.SetMutePeriod(level, mutePeriod);
             return this;
         }
 
