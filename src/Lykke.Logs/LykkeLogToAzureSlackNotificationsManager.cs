@@ -20,7 +20,7 @@ namespace Lykke.Logs
         private readonly SpamGuard _spamGuard = new SpamGuard();
 
         /// <summary>
-        /// C-tor with a custom component name and deafult log levels collection.
+        /// C-tor with a custom component name and default log levels collection.
         /// </summary>
         /// <param name="componentName">Custom component name</param>
         /// <param name="slackNotificationsSender">Sender for slack messages</param>
