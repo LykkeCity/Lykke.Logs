@@ -44,12 +44,10 @@ namespace Lykke.Logs
             var levelDict = _lastMessages.GetOrAdd(level, new Dictionary<string, DateTime>());
             var key = GetEntryKey(component, process);
             var now = DateTime.UtcNow;
-            DateTime lastTime = now;
+            DateTime lastTime;
             lock(levelDict)
             {
-                if (levelDict.TryGetValue(key, out var time))
-                    lastTime = time;
-                else
+                if (!levelDict.TryGetValue(key, out lastTime))
                     lastTime = DateTime.MinValue;
                 levelDict[key] = now;
             }
