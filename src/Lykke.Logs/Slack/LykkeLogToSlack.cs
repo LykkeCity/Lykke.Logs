@@ -89,7 +89,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isMonitorEnabled)
             {
-                if (_spamGuard.IsSameMessage(LogLevel.Monitoring, component, process, info))
+                if (_spamGuard.ShouldBeMuted(LogLevel.Monitoring, component, process, info))
                     return Task.CompletedTask;
 
                 var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
@@ -103,7 +103,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                if (_spamGuard.IsSameMessage(LogLevel.Warning, component, process, info))
+                if (_spamGuard.ShouldBeMuted(LogLevel.Warning, component, process, info))
                     return Task.CompletedTask;
 
                 var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
@@ -118,7 +118,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isWarningEnabled)
             {
-                if (_spamGuard.IsSameMessage(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
+                if (_spamGuard.ShouldBeMuted(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
                     return Task.CompletedTask;
 
                 var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
@@ -132,7 +132,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isErrorEnabled)
             {
-                if (_spamGuard.IsSameMessage(LogLevel.Error, component, process, exception.Message))
+                if (_spamGuard.ShouldBeMuted(LogLevel.Error, component, process, exception.Message))
                     return Task.CompletedTask;
 
                 var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
