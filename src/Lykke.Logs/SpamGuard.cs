@@ -1,23 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
+using Common;
 
 namespace Lykke.Logs
 {
-    internal class SpamGuard
+    internal class SpamGuard : TimerPeriod
     {
-        private struct LastMessageInfo
-        {
-            internal DateTime Time { get; set; }
-            internal string Component { get; set; }
-            internal string Process { get; set; }
-            internal string Message { get; set; }
-        }
-
-        private readonly ConcurrentDictionary<LogLevel, LastMessageInfo> _lastMessages = new ConcurrentDictionary<LogLevel, LastMessageInfo>();
+        private readonly ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>> _lastMessages =
+            new ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>>();
         private readonly Dictionary<LogLevel, TimeSpan> _mutePeriods = new Dictionary<LogLevel, TimeSpan>();
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         private bool _disableGuarding;
+
+        public SpamGuard()
+            : base((int)TimeSpan.FromMinutes(5).TotalMilliseconds)
+        {
+        }
 
         internal void DisableGuarding()
         {
@@ -32,7 +34,7 @@ namespace Lykke.Logs
             _mutePeriods[level] = mutePeriod;
         }
 
-        internal bool IsSameMessage(
+        internal async Task<bool> ShouldBeMutedAsync(
             LogLevel level,
             string component,
             string process,
@@ -41,32 +43,50 @@ namespace Lykke.Logs
             if (!_mutePeriods.ContainsKey(level))
                 return false;
 
+            var levelDict = _lastMessages.GetOrAdd(level, new Dictionary<string, DateTime>());
+            var key = GetEntryKey(component, process);
             var now = DateTime.UtcNow;
-            bool isSameMessage = false;
-            var messageInfo = new LastMessageInfo
+            DateTime lastTime;
+            await _lock.WaitAsync();
+            try
             {
-                Time = now,
-                Component = component,
-                Process = process,
-                Message = message,
-            };
-            _lastMessages.AddOrUpdate(
-                level,
-                messageInfo,
-                (l, c) =>
-                {
-                    if (c.Component == component
-                        && c.Process == process
-                        && c.Message == message
-                        && now - c.Time < _mutePeriods[level])
-                    {
-                        isSameMessage = true;
-                        return c;
-                    }
-                    return messageInfo;
-                });
+                levelDict.TryGetValue(key, out lastTime);
+                levelDict[key] = now;
+            }
+            finally
+            {
+                _lock.Release();
+            }
+            return now - lastTime <= _mutePeriods[level];
+        }
 
-            return isSameMessage;
+        private static string GetEntryKey(string component, string process)
+        {
+            return $"{component}_{process}";
+        }
+
+        public override async Task Execute()
+        {
+            var now = DateTime.UtcNow;
+            foreach (var level in _lastMessages.Keys)
+            {
+                var levelDict = _lastMessages[level];
+                var mutePeriod = _mutePeriods[level];
+                await _lock.WaitAsync();
+                try
+                {
+                    foreach (var key in levelDict.Keys)
+                    {
+                        var lastTime = levelDict[key];
+                        if (now - lastTime > mutePeriod)
+                            levelDict.Remove(key);
+                    }
+                }
+                finally
+                {
+                    _lock.Release();
+                }
+            }
         }
     }
 }
