@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using Common;
 
@@ -11,7 +12,7 @@ namespace Lykke.Logs
         private readonly ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>> _lastMessages =
             new ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>>();
         private readonly Dictionary<LogLevel, TimeSpan> _mutePeriods = new Dictionary<LogLevel, TimeSpan>();
-
+        private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private bool _disableGuarding;
 
         public SpamGuard()
@@ -45,10 +46,15 @@ namespace Lykke.Logs
             var key = GetEntryKey(component, process);
             var now = DateTime.UtcNow;
             DateTime lastTime;
-            lock(levelDict)
+            _lock.Wait();
+            try
             {
                 levelDict.TryGetValue(key, out lastTime);
                 levelDict[key] = now;
+            }
+            finally
+            {
+                _lock.Release();
             }
             return now - lastTime <= _mutePeriods[level];
         }
@@ -65,7 +71,8 @@ namespace Lykke.Logs
             {
                 var levelDict = _lastMessages[level];
                 var mutePeriod = _mutePeriods[level];
-                lock (levelDict)
+                _lock.Wait();
+                try
                 {
                     foreach (var key in levelDict.Keys)
                     {
@@ -73,6 +80,10 @@ namespace Lykke.Logs
                         if (now - lastTime > mutePeriod)
                             levelDict.Remove(key);
                     }
+                }
+                finally
+                {
+                    _lock.Release();
                 }
             }
 
