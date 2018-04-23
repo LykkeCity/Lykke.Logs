@@ -47,8 +47,7 @@ namespace Lykke.Logs
             DateTime lastTime;
             lock(levelDict)
             {
-                if (!levelDict.TryGetValue(key, out lastTime))
-                    lastTime = DateTime.MinValue;
+                levelDict.TryGetValue(key, out lastTime);
                 levelDict[key] = now;
             }
             return now - lastTime <= _mutePeriods[level];
