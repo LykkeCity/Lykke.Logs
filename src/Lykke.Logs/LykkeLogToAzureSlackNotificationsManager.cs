@@ -145,7 +145,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.ErrorType:
                     {
-                        if (_spamGuard.ShouldBeMuted(LogLevel.Error, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, componentName, entry.Process, entry.Msg))
                             break;
 
                         var message = entry.Context != null
@@ -157,7 +157,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.WarningType:
                     {
-                        if (_spamGuard.ShouldBeMuted(LogLevel.Warning, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, componentName, entry.Process, entry.Msg))
                             break;
 
                         var message = entry.Context != null
@@ -169,7 +169,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.MonitorType:
                     {
-                        if (_spamGuard.ShouldBeMuted(LogLevel.Monitoring, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, componentName, entry.Process, entry.Msg))
                             break;
 
                         var message = entry.Context != null

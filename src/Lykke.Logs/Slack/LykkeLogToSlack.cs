@@ -85,61 +85,53 @@ namespace Lykke.Logs.Slack
             return Task.CompletedTask;
         }
 
-        public Task WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime = null)
+        public async Task WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            if (_isMonitorEnabled)
-            {
-                if (_spamGuard.ShouldBeMuted(LogLevel.Monitoring, component, process, info))
-                    return Task.CompletedTask;
+            if (!_isMonitorEnabled)
+                return;
 
-                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
-                return _sender.SendAsync(_channel, ":loudspeaker:", message);
-            }
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, component, process, info))
+                return;
 
-            return Task.CompletedTask;
+            var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+            await _sender.SendAsync(_channel, ":loudspeaker:", message);
         }
 
-        public Task WriteWarningAsync(string component, string process, string context, string info, DateTime? dateTime = null)
+        public async Task WriteWarningAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            if (_isWarningEnabled)
-            {
-                if (_spamGuard.ShouldBeMuted(LogLevel.Warning, component, process, info))
-                    return Task.CompletedTask;
+            if (!_isWarningEnabled)
+                return;
 
-                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
-                return _sender.SendAsync(_channel, ":warning:", message);
-            }
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, info))
+                return;
 
-            return Task.CompletedTask;
+            var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+            await _sender.SendAsync(_channel, ":warning:", message);
         }
 
-        public Task WriteWarningAsync(string component, string process, string context, string info, Exception ex,
+        public async Task WriteWarningAsync(string component, string process, string context, string info, Exception ex,
             DateTime? dateTime = null)
         {
-            if (_isWarningEnabled)
-            {
-                if (_spamGuard.ShouldBeMuted(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
-                    return Task.CompletedTask;
+            if (!_isWarningEnabled)
+                return;
 
-                var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
-                return _sender.SendAsync(_channel, ":warning:", message);
-            }
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
+                return;
 
-            return Task.CompletedTask;
+            var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
+            await _sender.SendAsync(_channel, ":warning:", message);
         }
 
-        public Task WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
+        public async Task WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime = null)
         {
-            if (_isErrorEnabled)
-            {
-                if (_spamGuard.ShouldBeMuted(LogLevel.Error, component, process, exception.Message))
-                    return Task.CompletedTask;
+            if (!_isErrorEnabled)
+                return;
 
-                var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
-                return _sender.SendAsync(_channel, ":exclamation:", message);
-            }
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, component, process, exception.Message))
+                return;
 
-            return Task.CompletedTask;
+            var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
+            await _sender.SendAsync(_channel, ":exclamation:", message);
         }
 
         public Task WriteFatalErrorAsync(string component, string process, string context, Exception exception,

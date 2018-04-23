@@ -13,6 +13,7 @@ namespace Lykke.Logs
             new ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>>();
         private readonly Dictionary<LogLevel, TimeSpan> _mutePeriods = new Dictionary<LogLevel, TimeSpan>();
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
         private bool _disableGuarding;
 
         public SpamGuard()
@@ -33,7 +34,7 @@ namespace Lykke.Logs
             _mutePeriods[level] = mutePeriod;
         }
 
-        internal bool ShouldBeMuted(
+        internal async Task<bool> ShouldBeMutedAsync(
             LogLevel level,
             string component,
             string process,
@@ -46,7 +47,7 @@ namespace Lykke.Logs
             var key = GetEntryKey(component, process);
             var now = DateTime.UtcNow;
             DateTime lastTime;
-            _lock.Wait();
+            await _lock.WaitAsync();
             try
             {
                 levelDict.TryGetValue(key, out lastTime);
@@ -64,14 +65,14 @@ namespace Lykke.Logs
             return $"{component}_{process}";
         }
 
-        public override Task Execute()
+        public override async Task Execute()
         {
             var now = DateTime.UtcNow;
             foreach (var level in _lastMessages.Keys)
             {
                 var levelDict = _lastMessages[level];
                 var mutePeriod = _mutePeriods[level];
-                _lock.Wait();
+                await _lock.WaitAsync();
                 try
                 {
                     foreach (var key in levelDict.Keys)
@@ -86,8 +87,6 @@ namespace Lykke.Logs
                     _lock.Release();
                 }
             }
-
-            return Task.CompletedTask;
         }
     }
 }
