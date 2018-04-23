@@ -49,10 +49,9 @@ namespace Lykke.Logs
             {
                 if (levelDict.TryGetValue(key, out var time))
                     lastTime = time;
-                else
-                    levelDict.Add(key, now);
+                levelDict[key] = now;
             }
-            return now - lastTime < _mutePeriods[level];
+            return now - lastTime <= _mutePeriods[level];
         }
 
         private static string GetEntryKey(string component, string process)
@@ -67,9 +66,9 @@ namespace Lykke.Logs
             {
                 var levelDict = _lastMessages[level];
                 var mutePeriod = _mutePeriods[level];
-                foreach (var key in new List<string>(levelDict.Keys))
+                lock (levelDict)
                 {
-                    lock(levelDict)
+                    foreach (var key in levelDict.Keys)
                     {
                         var lastTime = levelDict[key];
                         if (now - lastTime > mutePeriod)
