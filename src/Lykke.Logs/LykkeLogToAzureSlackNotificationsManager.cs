@@ -17,7 +17,7 @@ namespace Lykke.Logs
         private readonly ILog _lastResortLog;
         private readonly string _component;
         private readonly HashSet<string> _logLevels;
-        private readonly SpamGuard _spamGuard = new SpamGuard();
+        private readonly SpamGuard _spamGuard;
 
         /// <summary>
         /// C-tor with a custom component name and default log levels collection.
@@ -92,7 +92,7 @@ namespace Lykke.Logs
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
             _logLevels = DefaultLogLevelsInit();
-
+            _spamGuard = new SpamGuard(lastResortLog ?? new LogToConsole());
             if (disableAntiSpam)
             {
                 _spamGuard.DisableGuarding();

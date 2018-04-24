@@ -21,13 +21,14 @@ namespace Lykke.Logs.Slack
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
         private readonly string _componentNamePrefix;
-        private readonly SpamGuard _spamGuard = new SpamGuard();
+        private readonly SpamGuard _spamGuard;
 
         private LykkeLogToSlack(
             ISlackNotificationsSender sender,
             string channel,
             LogLevel logLevel,
-            bool disableAntiSpam)
+            bool disableAntiSpam,
+            ILog lastResortLog)
         {
             _sender = sender;
             _channel = channel;
@@ -40,6 +41,7 @@ namespace Lykke.Logs.Slack
 
             _componentNamePrefix = GetComponentNamePrefix();
 
+            _spamGuard = new SpamGuard(lastResortLog ?? new LogToConsole());
             if (disableAntiSpam)
             {
                 _spamGuard.DisableGuarding();
@@ -61,7 +63,21 @@ namespace Lykke.Logs.Slack
             LogLevel logLevel = LogLevel.All,
             bool disableAntiSpam = false)
         {
-            return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam);
+            return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam, null);
+        }
+
+        /// <summary>
+        /// Creates logger with, which logs entries of the given <paramref name="logLevel"/>, to the given <paramref name="channel"/>,
+        /// using given <paramref name="sender"/> with a flag to disable antispam protection
+        /// </summary>
+        public static ILog Create(
+            ISlackNotificationsSender sender,
+            string channel,
+            ILog lastResortLog,
+            LogLevel logLevel = LogLevel.All,
+            bool disableAntiSpam = false)
+        {
+            return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam, lastResortLog);
         }
 
         /// <summary>

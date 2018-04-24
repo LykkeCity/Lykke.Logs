@@ -17,8 +17,8 @@ namespace Lykke.Logs
 
         private bool _disableGuarding;
 
-        public SpamGuard()
-            : base((int)TimeSpan.FromMinutes(5).TotalMilliseconds, new LogToConsole())
+        public SpamGuard(ILog log)
+            : base((int)TimeSpan.FromMinutes(5).TotalMilliseconds, log)
         {
             DisableTelemetry();
         }
