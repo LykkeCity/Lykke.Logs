@@ -41,9 +41,14 @@ namespace Lykke.Logs.Slack
             _componentNamePrefix = GetComponentNamePrefix();
 
             if (disableAntiSpam)
+            {
                 _spamGuard.DisableGuarding();
+            }
             else
+            {
                 SetSpamMutePeriodForLevels(TimeSpan.FromMinutes(1), LogLevel.Warning, LogLevel.Error);
+                _spamGuard.Start();
+            }
         }
 
         /// <summary>
