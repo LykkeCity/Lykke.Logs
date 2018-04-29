@@ -77,7 +77,8 @@ namespace Lykke.Logs
                 await _lock.WaitAsync();
                 try
                 {
-                    foreach (var key in levelDict.Keys)
+                    var keys = new List<string>(levelDict.Keys);
+                    foreach (var key in keys)
                     {
                         var lastTime = levelDict[key];
                         if (now - lastTime > mutePeriod)
