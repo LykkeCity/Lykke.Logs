@@ -195,17 +195,13 @@ namespace Lykke.Logs
         {
             var sb = new StringBuilder();
 
-            sb.Append($"{_component} {entry.Version}");
+            sb.Append($"[{entry.DateTime.ToString("yyyy-MM-dd HH:mm:ss")}] {_component} {entry.Version}");
 
             if (!string.IsNullOrWhiteSpace(entry.Env))
-            {
                 sb.Append($" : {entry.Env}");
-            }
 
             if (_component == null || !_component.StartsWith(entry.Component))
-            {
                 sb.Append($" : {entry.Component}");
-            }
 
             return sb.ToString();
         }
