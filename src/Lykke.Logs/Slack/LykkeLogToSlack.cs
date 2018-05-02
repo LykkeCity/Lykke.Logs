@@ -13,6 +13,8 @@ namespace Lykke.Logs.Slack
     [PublicAPI]
     public sealed class LykkeLogToSlack : ILog
     {
+        private const string _timeFormat = "yyyy-MM-dd HH:mm:ss";
+
         private readonly ISlackNotificationsSender _sender;
         private readonly string _channel;
         private readonly bool _isInfoEnabled;
@@ -99,7 +101,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isInfoEnabled)
             {
-                var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+                var message = $"{GetComponentName(component, dateTime)} : {process} : {info} : {context}";
                 return _sender.SendAsync(_channel, ":information_source:", message);
             }
 
@@ -114,7 +116,7 @@ namespace Lykke.Logs.Slack
             if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, component, process, info))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+            var message = $"{GetComponentName(component, dateTime)} : {process} : {info} : {context}";
             await _sender.SendAsync(_channel, ":loudspeaker:", message);
         }
 
@@ -126,7 +128,7 @@ namespace Lykke.Logs.Slack
             if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, info))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
+            var message = $"{GetComponentName(component, dateTime)} : {process} : {info} : {context}";
             await _sender.SendAsync(_channel, ":warning:", message);
         }
 
@@ -139,7 +141,7 @@ namespace Lykke.Logs.Slack
             if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
+            var message = $"{GetComponentName(component, dateTime)} : {process} : {ex} : {info} : {context}";
             await _sender.SendAsync(_channel, ":warning:", message);
         }
 
@@ -151,7 +153,7 @@ namespace Lykke.Logs.Slack
             if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, component, process, exception.Message))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
+            var message = $"{GetComponentName(component, dateTime)} : {process} : {exception} : {context}";
             await _sender.SendAsync(_channel, ":exclamation:", message);
         }
 
@@ -160,7 +162,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isFatalErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component, dateTime)} : {process} : {exception} : {context}");
             }
 
             return Task.CompletedTask;
@@ -203,18 +205,17 @@ namespace Lykke.Logs.Slack
             sb.Append($"{AppEnvironment.Name} {AppEnvironment.Version}");
 
             if (!string.IsNullOrWhiteSpace(AppEnvironment.EnvInfo))
-            {
                 sb.Append($" : {AppEnvironment.EnvInfo}");
-            }
 
             return sb.ToString();
         }
 
-        private string GetComponentName(string component)
+        private string GetComponentName(string component, DateTime? dateTime)
         {
+            var dt = dateTime ?? DateTime.UtcNow;
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
-                return string.Concat(_componentNamePrefix, " : ", component);
-            return _componentNamePrefix;
+                return $"[{dt.ToString(_timeFormat)}] {_componentNamePrefix} : {component}";
+            return $"[{dt.ToString(_timeFormat)}] {_componentNamePrefix}";
         }
     }
 }
