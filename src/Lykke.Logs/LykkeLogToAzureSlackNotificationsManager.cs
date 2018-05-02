@@ -13,6 +13,8 @@ namespace Lykke.Logs
     /// </summary>
     public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {
+        private const string _timeFormat = "yyyy-MM-dd HH:mm:ss";
+
         private readonly ISlackNotificationsSender _slackNotificationsSender;
         private readonly ILog _lastResortLog;
         private readonly string _component;
@@ -195,7 +197,7 @@ namespace Lykke.Logs
         {
             var sb = new StringBuilder();
 
-            sb.Append($"[{entry.DateTime.ToString("yyyy-MM-dd HH:mm:ss")}] {_component} {entry.Version}");
+            sb.Append($"[{entry.DateTime.ToString(_timeFormat)}] {_component} {entry.Version}");
 
             if (!string.IsNullOrWhiteSpace(entry.Env))
                 sb.Append($" : {entry.Env}");

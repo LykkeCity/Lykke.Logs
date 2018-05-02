@@ -13,6 +13,8 @@ namespace Lykke.Logs.Slack
     [PublicAPI]
     public sealed class LykkeLogToSlack : ILog
     {
+        private const string _timeFormat = "yyyy-MM-dd HH:mm:ss";
+
         private readonly ISlackNotificationsSender _sender;
         private readonly string _channel;
         private readonly bool _isInfoEnabled;
@@ -212,8 +214,8 @@ namespace Lykke.Logs.Slack
         {
             var dt = dateTime ?? DateTime.UtcNow;
             if (AppEnvironment.Name == null || !AppEnvironment.Name.StartsWith(component))
-                return $"[{dt.ToString("yyyy-MM-dd HH:mm:ss")}] {_componentNamePrefix} : {component}";
-            return $"[{dt.ToString("yyyy-MM-dd HH:mm:ss")}] {_componentNamePrefix}";
+                return $"[{dt.ToString(_timeFormat)}] {_componentNamePrefix} : {component}";
+            return $"[{dt.ToString(_timeFormat)}] {_componentNamePrefix}";
         }
     }
 }
