@@ -95,15 +95,16 @@ namespace Lykke.Logs.Slack
             return this;
         }
 
-        public Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
+        public async Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)
         {
-            if (_isInfoEnabled)
-            {
-                var message = $"{GetComponentName(component, dateTime)} : {process} : {info} : {context}";
-                return _sender.SendAsync(_channel, ":information_source:", message);
-            }
+            if (!_isInfoEnabled)
+                return;
 
-            return Task.CompletedTask;
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Info, component, process, info))
+                return;
+
+            var message = $"{GetComponentName(component, dateTime)} : {process} : {info} : {context}";
+            await _sender.SendAsync(_channel, ":information_source:", message);
         }
 
         public async Task WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime = null)
