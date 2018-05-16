@@ -2,6 +2,7 @@
 using System.Threading;
 using Moq;
 using Xunit;
+using Lykke.Logs.Slack;
 using Lykke.SlackNotifications;
 
 namespace Lykke.Logs.Tests
@@ -143,6 +144,21 @@ namespace Lykke.Logs.Tests
 
             //Assert
             _slackNotificationsSenderMock.Verify(x => x.SendAsync(It.Is<string>(t => t == "Warning"), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+        }
+
+        [Fact]
+        public void TestLogToSlackPreventsSameMessageSpamWithDefaultConfiguration()
+        {
+            // Arrange
+            string channel = "Prices";
+            var logToSlack = LykkeLogToSlack.Create(_slackNotificationsSenderMock.Object, channel);
+
+            // Act
+            logToSlack.WriteInfoAsync("Process", "Context", "Message").GetAwaiter().GetResult();
+            logToSlack.WriteInfoAsync("Process", "Context", "Message").GetAwaiter().GetResult();
+
+            //Assert
+            _slackNotificationsSenderMock.Verify(x => x.SendAsync(It.Is<string>(t => t == channel), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
     }
 }
