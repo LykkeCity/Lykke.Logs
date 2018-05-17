@@ -3,13 +3,17 @@ using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Common.Log;
+using Lykke.Common;
+using Lykke.Common.Log;
 using Lykke.SlackNotifications;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs.Slack
 {
     /// <summary>
     /// Logs entries to the specified Slack channel. Which types of entries should be logged, can be configured
     /// </summary>
+    [Obsolete("Use new Lykke logging system")]
     [PublicAPI]
     public sealed class LykkeLogToSlack : ILog
     {
@@ -93,6 +97,21 @@ namespace Lykke.Logs.Slack
                 _spamGuard.SetMutePeriod(level, mutePeriod);
             }
             return this;
+        }
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) where TState : LogEntryParameters
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IDisposable BeginScope(string scopeMessage)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime = null)

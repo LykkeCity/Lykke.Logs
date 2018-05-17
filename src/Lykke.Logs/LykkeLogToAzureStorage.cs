@@ -6,9 +6,13 @@ using AsyncFriendlyStackTrace;
 using Autofac;
 using Common;
 using Common.Log;
+using Lykke.Common;
+using Lykke.Common.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
+    [Obsolete("Use new Lykke logging system")]
     public class LykkeLogToAzureStorage : TimerPeriod, ILog
     {
         public const string ErrorType = "error";
@@ -140,6 +144,21 @@ namespace Lykke.Logs
             _slackNotificationsManager = notificationsManager;
 
             return this;
+        }
+
+        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) where TState : LogEntryParameters
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IDisposable BeginScope(string scopeMessage)
+        {
+            throw new NotImplementedException();
         }
 
         public Task WriteInfoAsync(string component, string process, string context, string info,

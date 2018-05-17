@@ -4,6 +4,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using JetBrains.Annotations;
+using Lykke.Common;
 using Lykke.SlackNotifications;
 
 namespace Lykke.Logs
@@ -11,6 +13,7 @@ namespace Lykke.Logs
     /// <summary>
     /// Class for async sending of slack messages from internal queue.
     /// </summary>
+    [PublicAPI]
     public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {
         private readonly ISlackNotificationsSender _slackNotificationsSender;

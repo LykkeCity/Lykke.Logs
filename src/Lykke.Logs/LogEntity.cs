@@ -1,4 +1,5 @@
 ﻿using System;
+using Lykke.Common;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs

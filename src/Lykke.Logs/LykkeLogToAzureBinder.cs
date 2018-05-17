@@ -1,12 +1,15 @@
 ﻿using System;
 using AzureStorage.Tables;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.SettingsReader;
 using Lykke.SlackNotifications;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Logs
 {
+    [Obsolete("Use new Lykke logging system")]
+    [PublicAPI]
     public static class LykkeLogToAzureBinder
     {
         /// <param name="serviceCollection">Service collection to which log instance will be added</param>
