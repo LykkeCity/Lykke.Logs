@@ -32,7 +32,7 @@ namespace Lykke.Logs
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            builder.AddConsole();
+            builder.AddLykkeConsole();
             builder.Services.Configure(configure);
 
             return builder;
@@ -44,7 +44,7 @@ namespace Lykke.Logs
         /// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
         public static ILoggerFactory AddLykkeConsole(this ILoggerFactory factory)
         {
-            return factory.AddConsole(includeScopes: false);
+            return factory.AddLykkeConsole(includeScopes: false);
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace Lykke.Logs
         /// in the output.</param>
         public static ILoggerFactory AddLykkeConsole(this ILoggerFactory factory, bool includeScopes)
         {
-            factory.AddConsole((n, l) => l >= Microsoft.Extensions.Logging.LogLevel.Information, includeScopes);
+            factory.AddLykkeConsole((n, l) => l >= Microsoft.Extensions.Logging.LogLevel.Information, includeScopes);
             return factory;
         }
 
@@ -66,7 +66,7 @@ namespace Lykke.Logs
         /// <param name="minLevel">The minimum <see cref="Microsoft.Extensions.Logging.LogLevel"/> to be logged</param>
         public static ILoggerFactory AddLykkeConsole(this ILoggerFactory factory, Microsoft.Extensions.Logging.LogLevel minLevel)
         {
-            factory.AddConsole(minLevel, includeScopes: false);
+            factory.AddLykkeConsole(minLevel, includeScopes: false);
             return factory;
         }
 
@@ -82,7 +82,7 @@ namespace Lykke.Logs
             Microsoft.Extensions.Logging.LogLevel minLevel,
             bool includeScopes)
         {
-            factory.AddConsole((category, logLevel) => logLevel >= minLevel, includeScopes);
+            factory.AddLykkeConsole((category, logLevel) => logLevel >= minLevel, includeScopes);
             return factory;
         }
 
@@ -95,7 +95,7 @@ namespace Lykke.Logs
             this ILoggerFactory factory,
             Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter)
         {
-            factory.AddConsole(filter, includeScopes: false);
+            factory.AddLykkeConsole(filter, includeScopes: false);
             return factory;
         }
 
@@ -137,7 +137,7 @@ namespace Lykke.Logs
         public static ILoggerFactory AddLykkeConsole(this ILoggerFactory factory, IConfiguration configuration)
         {
             var settings = new ConfigurationConsoleLoggerSettings(configuration);
-            return factory.AddConsole(settings);
+            return factory.AddLykkeConsole(settings);
         }
     }
 }

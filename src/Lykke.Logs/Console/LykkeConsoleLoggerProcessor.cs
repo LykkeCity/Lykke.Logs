@@ -42,7 +42,7 @@ namespace Lykke.Logs
         // for testing
         private void WriteMessage(LykkeLogMessageEntry message)
         {
-            Console.Write(message.Message, message.MessageBackground, message.MessageForeground);
+            Console.WriteLine(message.Message, message.MessageBackground, message.MessageForeground);
             Console.Flush();
         }
 

@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using AsyncFriendlyStackTrace;
+using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Console.Internal;
@@ -10,9 +11,8 @@ namespace Lykke.Logs
 {
     internal sealed class LykkeConsoleLogger : ILogger
     {
-        private static readonly string LoglevelPadding = ": ";
+        private static readonly string LogLevelPadding = ": ";
         private static readonly string MessagePadding;
-        private static readonly string NewLineWithMessagePadding;
 
         // ConsoleColor does not have a value to specify the 'Default' color
         private readonly ConsoleColor? _defaultConsoleColor = null;
@@ -26,8 +26,7 @@ namespace Lykke.Logs
         static LykkeConsoleLogger()
         {
             var logLevelString = GetLogLevelString(Microsoft.Extensions.Logging.LogLevel.Information);
-            MessagePadding = new string(' ', logLevelString.Length + LoglevelPadding.Length);
-            NewLineWithMessagePadding = Environment.NewLine + MessagePadding;
+            MessagePadding = new string(' ', logLevelString.Length + LogLevelPadding.Length);
         }
 
         public LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
@@ -55,30 +54,14 @@ namespace Lykke.Logs
 
         public IConsole Console
         {
-            get { return _queueProcessor.Console; }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
-                _queueProcessor.Console = value;
-            }
+            get => _queueProcessor.Console;
+            set => _queueProcessor.Console = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public Func<string, Microsoft.Extensions.Logging.LogLevel, bool> Filter
         {
-            get { return _filter; }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
-                _filter = value;
-            }
+            get => _filter;
+            set => _filter = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public bool IncludeScopes { get; set; }
@@ -107,7 +90,7 @@ namespace Lykke.Logs
 
             if (!string.IsNullOrEmpty(message) || exception != null)
             {
-                WriteMessage(logLevel, callerInfo, Name, eventId.Id, message, exception);
+                WriteMessage(logLevel, callerInfo, Name, message);
             }
         }
 
@@ -116,7 +99,7 @@ namespace Lykke.Logs
             return exception?.ToAsyncString();
         }
 
-        private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, int eventId, string message, Exception exception)
+        private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message)
         {
             var logBuilder = _logBuilder;
             _logBuilder = null;
@@ -144,7 +127,6 @@ namespace Lykke.Logs
             logBuilder.Append(callerInfo.Context);
             logBuilder.Append(" - ");
             logBuilder.Append(message);
-            logBuilder.AppendLine();
 
 
             // scope information
