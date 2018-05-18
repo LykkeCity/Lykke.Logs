@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Logging.Console.Internal;
 using Microsoft.Extensions.Options;
 
 namespace Lykke.Logs
@@ -19,17 +18,12 @@ namespace Lykke.Logs
 
         private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> TrueFilter = (cat, level) => true;
         private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> FalseFilter = (cat, level) => false;
-        private IDisposable _optionsReloadToken;
+        private readonly IDisposable _optionsReloadToken;
         private bool _includeScopes;
 
         public LykkeConsoleLoggerProvider(Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
         {
-            if (filter == null)
-            {
-                throw new ArgumentNullException(nameof(filter));
-            }
-
-            _filter = filter;
+            _filter = filter ?? throw new ArgumentNullException(nameof(filter));
             _includeScopes = includeScopes;
         }
 
@@ -74,7 +68,7 @@ namespace Lykke.Logs
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"Error while loading configuration changes.{Environment.NewLine}{ex}");
+                Console.WriteLine($"Error while loading configuration changes.{Environment.NewLine}{ex}");
             }
             finally
             {

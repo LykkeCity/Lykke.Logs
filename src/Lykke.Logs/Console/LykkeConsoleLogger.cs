@@ -215,7 +215,7 @@ namespace Lykke.Logs
             }
         }
 
-        private void GetScopeInformation(StringBuilder builder)
+        private static void GetScopeInformation(StringBuilder builder)
         {
             var current = ConsoleLogScope.Current;
             var length = builder.Length;

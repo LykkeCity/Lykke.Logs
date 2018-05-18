@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Logs", "src\Lykke.Log
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9CF7F532-A6E2-4559-98F3-0D3A1271EEE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lykke.Logs.Tests", "tests\Lykke.Logs.Tests\Lykke.Logs.Tests.csproj", "{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Logs.Tests", "tests\Lykke.Logs.Tests\Lykke.Logs.Tests.csproj", "{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleLoggerRunner", "tests\Lykke.Logs.Tests\ConsoleLoggerRunner\ConsoleLoggerRunner.csproj", "{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,12 +25,17 @@ Global
 		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{F8F48A81-B865-4D0B-BBE0-E030EB5B1D21} = {9CF7F532-A6E2-4559-98F3-0D3A1271EEE9}
+		{2DCC3BB1-0FE1-4F7C-B059-06FF49653EBD} = {9CF7F532-A6E2-4559-98F3-0D3A1271EEE9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C5257CB6-DABE-42A7-8D99-762B0668F949}

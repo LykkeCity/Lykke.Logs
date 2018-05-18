@@ -10,13 +10,11 @@ namespace Lykke.Logs.Tests
 {
     public class ConsoleOutputTest
     {
-        private readonly LoggerFactory _loggerFactory;
         private readonly LykkeConsoleLogger _logger;
         private readonly IConsole _console;
 
         public ConsoleOutputTest()
         {
-            _loggerFactory = new LoggerFactory(new[] { new LykkeConsoleLoggerProvider(Filter, false) });
             _console = Substitute.For<IConsole>();
             var logger = new LykkeConsoleLogger("MyLogger", (s, level) => true, false)
             {
@@ -34,6 +32,14 @@ namespace Lykke.Logs.Tests
             var expected = $"{state.Moment:yyyy-MM-dd HH:mm:ss:fff} [{"INFO"}] {_logger.Name}:{state.Process}:{state.Context} - {state.Message}";
             Thread.Sleep(50);
             _console.Received().WriteLine(expected, null, ConsoleColor.Gray);
+        }
+
+        [Fact]
+        public void ProviderShouldReturnCorrectLogger()
+        {
+            var provider = new LykkeConsoleLoggerProvider(Filter, false);
+            var logger = provider.CreateLogger("SupperLogger");
+            Assert.IsType<LykkeConsoleLogger>(logger);
         }
 
         private static bool Filter(string arg1, Microsoft.Extensions.Logging.LogLevel arg2)
