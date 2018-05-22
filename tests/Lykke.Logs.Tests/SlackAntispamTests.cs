@@ -151,7 +151,7 @@ namespace Lykke.Logs.Tests
         {
             // Arrange
             string channel = "Prices";
-            var logToSlack = LykkeLogToSlack.Create(_slackNotificationsSenderMock.Object, channel);
+            var logToSlack = LykkeLogToSlack.Create(_slackNotificationsSenderMock.Object, channel,  disableAntiSpam: false);
 
             // Act
             logToSlack.WriteInfoAsync("Process", "Context", "Message").GetAwaiter().GetResult();
