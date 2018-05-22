@@ -3,10 +3,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging.Console.Internal;
 using Microsoft.Extensions.Options;
 
 namespace Lykke.Logs
 {
+    /// <inheritdoc />
     [ProviderAlias("Console")]
     public sealed class LykkeConsoleLoggerProvider : ILoggerProvider
     {
@@ -14,19 +16,29 @@ namespace Lykke.Logs
 
         private readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> _filter;
         private IConsoleLoggerSettings _settings;
-        private readonly LykkeConsoleLoggerProcessor _messageQueue = new LykkeConsoleLoggerProcessor();
+        private readonly ConsoleLoggerProcessor _messageQueue = new ConsoleLoggerProcessor();
 
         private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> TrueFilter = (cat, level) => true;
         private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> FalseFilter = (cat, level) => false;
         private readonly IDisposable _optionsReloadToken;
         private bool _includeScopes;
 
+
+        /// <summary>
+        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
+        /// </summary>
+        /// <param name="filter">A filter method</param>
+        /// <param name="includeScopes">Use scopes flag</param>
         public LykkeConsoleLoggerProvider(Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
         {
             _filter = filter ?? throw new ArgumentNullException(nameof(filter));
             _includeScopes = includeScopes;
         }
 
+        /// <summary>
+        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
+        /// </summary>
+        /// <param name="options"></param>
         public LykkeConsoleLoggerProvider(IOptionsMonitor<ConsoleLoggerOptions> options)
         {
             // Filter would be applied on LoggerFactory level
@@ -44,6 +56,10 @@ namespace Lykke.Logs
             }
         }
 
+        /// <summary>
+        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
+        /// </summary>
+        /// <param name="settings">Initialization settings</param>
         public LykkeConsoleLoggerProvider(IConsoleLoggerSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -77,6 +93,7 @@ namespace Lykke.Logs
             }
         }
 
+        /// <inheritdoc />
         public ILogger CreateLogger(string name)
         {
             return _loggers.GetOrAdd(name, CreateLoggerImplementation);
@@ -124,6 +141,7 @@ namespace Lykke.Logs
             }
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             _optionsReloadToken?.Dispose();
