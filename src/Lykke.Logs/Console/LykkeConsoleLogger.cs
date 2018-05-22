@@ -94,12 +94,12 @@ namespace Lykke.Logs
 
             if (!string.IsNullOrEmpty(message) || exception != null)
             {
-                WriteMessage2(logLevel, callerInfo, Name, message, exception);
+                WriteMessage(logLevel, callerInfo, Name, message, exception);
             }
         }
 
 
-        private void WriteMessage2(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message, Exception exception)
+        private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message, Exception exception)
         {
             var logBuilder = _logBuilder;
             _logBuilder = null;
