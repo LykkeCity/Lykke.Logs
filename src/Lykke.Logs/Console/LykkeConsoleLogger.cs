@@ -13,11 +13,13 @@ namespace Lykke.Logs
     {
         private static readonly string LogLevelPadding = ": ";
         private static readonly string MessagePadding;
+        private static readonly string NewLineWithMessagePadding;
+
 
         // ConsoleColor does not have a value to specify the 'Default' color
         private readonly ConsoleColor? _defaultConsoleColor = null;
 
-        private readonly LykkeConsoleLoggerProcessor _queueProcessor;
+        private readonly ConsoleLoggerProcessor _queueProcessor;
         private Func<string, Microsoft.Extensions.Logging.LogLevel, bool> _filter;
 
         [ThreadStatic]
@@ -27,14 +29,16 @@ namespace Lykke.Logs
         {
             var logLevelString = GetLogLevelString(Microsoft.Extensions.Logging.LogLevel.Information);
             MessagePadding = new string(' ', logLevelString.Length + LogLevelPadding.Length);
+            NewLineWithMessagePadding = Environment.NewLine + MessagePadding;
+
         }
 
         public LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
-            : this(name, filter, includeScopes, new LykkeConsoleLoggerProcessor())
+            : this(name, filter, includeScopes, new ConsoleLoggerProcessor())
         {
         }
 
-        internal LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes, LykkeConsoleLoggerProcessor loggerProcessor)
+        internal LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes, ConsoleLoggerProcessor loggerProcessor)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Filter = filter ?? ((category, logLevel) => true);
@@ -86,20 +90,16 @@ namespace Lykke.Logs
                 throw new ArgumentNullException(nameof(formatter));
             }
 
-            var message = GetExceptionString(exception) ?? formatter(state, exception);
+            var message = formatter(state, exception);
 
             if (!string.IsNullOrEmpty(message) || exception != null)
             {
-                WriteMessage(logLevel, callerInfo, Name, message);
+                WriteMessage(logLevel, callerInfo, Name, message, exception);
             }
         }
 
-        private static string GetExceptionString(Exception exception)
-        {
-            return exception?.ToAsyncString();
-        }
 
-        private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message)
+        private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message, Exception exception)
         {
             var logBuilder = _logBuilder;
             _logBuilder = null;
@@ -109,24 +109,15 @@ namespace Lykke.Logs
                 logBuilder = new StringBuilder();
             }
 
-            // Example:
-            // INFO: ConsoleApp.Program[10]
-            //       Request received
-
             var logLevelColors = GetLogLevelConsoleColors(logLevel);
             var logLevelString = GetLogLevelString(logLevel);
-            // category and event id
-            logBuilder.AppendFormat(@"{0:yyyy-MM-dd HH:mm:ss:fff}", callerInfo.Moment);
-            logBuilder.Append(" [");
-            logBuilder.Append(logLevelString);
-            logBuilder.Append("] ");
+
+            logBuilder.Append(LogLevelPadding);
+            logBuilder.AppendFormat(@"{0:MM-dd HH:mm:ss.fff}", callerInfo.Moment);
+            logBuilder.Append(" : ");
             logBuilder.Append(logName);
-            logBuilder.Append(":");
-            logBuilder.Append(callerInfo.Process);
-            logBuilder.Append(":");
-            logBuilder.Append(callerInfo.Context);
-            logBuilder.Append(" - ");
-            logBuilder.Append(message);
+            logBuilder.Append(" : ");
+            logBuilder.AppendLine(callerInfo.Process);
 
 
             // scope information
@@ -135,16 +126,44 @@ namespace Lykke.Logs
                 GetScopeInformation(logBuilder);
             }
 
+            if (!string.IsNullOrEmpty(message))
+            {
+                // message
+                logBuilder.Append(MessagePadding);
+
+                var len = logBuilder.Length;
+                logBuilder.AppendLine(message);
+                logBuilder.Replace(Environment.NewLine, NewLineWithMessagePadding, len, message.Length);
+            }
+
+            var contextString = callerInfo.Context;
+            if (!string.IsNullOrWhiteSpace(contextString))
+            {
+                var len = logBuilder.Length;
+                logBuilder.Append(MessagePadding);
+                logBuilder.AppendLine(contextString);
+                logBuilder.Replace(Environment.NewLine, NewLineWithMessagePadding, len, contextString.Length + MessagePadding.Length);
+            }
+
+            // Example:
+            // System.InvalidOperationException
+            //    at Namespace.Class.Function() in File:line X
+            if (exception != null)
+            {
+                logBuilder.AppendLine(exception.ToAsyncString());
+            }
+
             if (logBuilder.Length > 0)
             {
                 var hasLevel = !string.IsNullOrEmpty(logLevelString);
                 // Queue log message
-                _queueProcessor.EnqueueMessage(new LykkeLogMessageEntry()
+                _queueProcessor.EnqueueMessage(new LogMessageEntry()
                 {
                     Message = logBuilder.ToString(),
+                    MessageColor = _defaultConsoleColor,
                     LevelString = hasLevel ? logLevelString : null,
-                    MessageBackground = hasLevel ? logLevelColors.Background : null,
-                    MessageForeground = hasLevel ? logLevelColors.Foreground : null
+                    LevelBackground = hasLevel ? logLevelColors.Background : null,
+                    LevelForeground = hasLevel ? logLevelColors.Foreground : null
                 });
             }
 
@@ -207,13 +226,14 @@ namespace Lykke.Logs
                 case Microsoft.Extensions.Logging.LogLevel.Information:
                     return new ConsoleColors(ConsoleColor.Gray, null);
                 case Microsoft.Extensions.Logging.LogLevel.Debug:
-                    return new ConsoleColors(ConsoleColor.Gray, null);
+                    return new ConsoleColors(ConsoleColor.White, null);
                 case Microsoft.Extensions.Logging.LogLevel.Trace:
-                    return new ConsoleColors(ConsoleColor.Gray, null);
+                    return new ConsoleColors(ConsoleColor.White, null);
                 default:
                     return new ConsoleColors(_defaultConsoleColor, _defaultConsoleColor);
             }
         }
+
 
         private static void GetScopeInformation(StringBuilder builder)
         {
