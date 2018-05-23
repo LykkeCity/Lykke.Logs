@@ -75,7 +75,7 @@ namespace Lykke.Logs.Slack
             string channel,
             ILog lastResortLog,
             LogLevel logLevel = LogLevel.All,
-            bool disableAntiSpam = false)
+            bool disableAntiSpam = true)
         {
             return new LykkeLogToSlack(sender, channel, logLevel, disableAntiSpam, lastResortLog);
         }
