@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Console.Internal;
 
-namespace Lykke.Logs
+namespace Lykke.Logs.Loggers.LykkeConsole
 {
     internal sealed class LykkeConsoleLogger : ILogger
     {
@@ -157,7 +157,7 @@ namespace Lykke.Logs
             {
                 var hasLevel = !string.IsNullOrEmpty(logLevelString);
                 // Queue log message
-                _queueProcessor.EnqueueMessage(new LogMessageEntry()
+                _queueProcessor.EnqueueMessage(new LogMessageEntry
                 {
                     Message = logBuilder.ToString(),
                     MessageColor = _defaultConsoleColor,

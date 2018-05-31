@@ -1,13 +1,14 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 
-
-namespace Lykke.Logs
+namespace Lykke.Logs.Loggers.LykkeConsole
 {
-    public static class ConsoleLoggerExtensions
+    [PublicAPI]
+    public static class LykkeConsoleLoggerExtensions
     {
         /// <summary>
         /// Adds a console logger named 'Console' to the factory.
@@ -16,24 +17,6 @@ namespace Lykke.Logs
         public static ILoggingBuilder AddLykkeConsole(this ILoggingBuilder builder)
         {
             builder.Services.AddSingleton<ILoggerProvider, LykkeConsoleLoggerProvider>();
-
-            return builder;
-        }
-
-        /// <summary>
-        /// Adds a console logger named 'Console' to the factory.
-        /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
-        /// <param name="configure"></param>
-        public static ILoggingBuilder AddLykkeConsole(this ILoggingBuilder builder, Action<LykkeConsoleLoggerProvider> configure)
-        {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            builder.AddLykkeConsole();
-            builder.Services.Configure(configure);
 
             return builder;
         }

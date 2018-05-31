@@ -1,8 +1,10 @@
+using System;
 using AzureStorage;
 using Common.Log;
 
 namespace Lykke.Logs
 {
+    [Obsolete("Use AzureTableLogPersistenceQueue")]
     public class LykkeLogToAzureStoragePersistenceManager : 
         LogPersistenceManager<LogEntity>,
         ILykkeLogToAzureStoragePersistenceManager

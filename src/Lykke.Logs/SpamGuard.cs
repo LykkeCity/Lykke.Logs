@@ -1,46 +1,66 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 
 namespace Lykke.Logs
 {
-    internal class SpamGuard : TimerPeriod
+    internal sealed class SpamGuard<TLevel> : 
+        TimerPeriod, 
+        ISpamGuardConfiguration<TLevel>, 
+        ISpamGuard<TLevel>
     {
-        private readonly ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>> _lastMessages =
-            new ConcurrentDictionary<LogLevel, Dictionary<string, DateTime>>();
-        private readonly Dictionary<LogLevel, TimeSpan> _mutePeriods = new Dictionary<LogLevel, TimeSpan>();
+        private readonly ConcurrentDictionary<TLevel, Dictionary<string, DateTime>> _lastMessages =
+            new ConcurrentDictionary<TLevel, Dictionary<string, DateTime>>();
+        private readonly Dictionary<TLevel, TimeSpan> _mutePeriods = new Dictionary<TLevel, TimeSpan>();
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         private bool _disableGuarding;
 
+        [Obsolete]
         public SpamGuard(ILog log)
             : base((int)TimeSpan.FromMinutes(5).TotalMilliseconds, log)
         {
             DisableTelemetry();
         }
 
-        internal void DisableGuarding()
+        public SpamGuard(ILogFactory lastResortLogFactory)
+            : base(TimeSpan.FromMinutes(5), lastResortLogFactory)
+        {
+            DisableTelemetry();
+        }
+
+        public void DisableGuarding()
         {
             _disableGuarding = true;
             _mutePeriods.Clear();
         }
 
-        internal void SetMutePeriod(LogLevel level, TimeSpan mutePeriod)
+        public void SetMutePeriod(TLevel level, TimeSpan mutePeriod)
         {
             if (_disableGuarding)
                 throw new InvalidOperationException("AntiSpam protection is disabled");
             _mutePeriods[level] = mutePeriod;
         }
 
-        internal async Task<bool> ShouldBeMutedAsync(
-            LogLevel level,
+        public override void Start()
+        {
+            if (_disableGuarding)
+            {
+                return;
+            }
+
+            base.Start();
+        }
+
+        public async Task<bool> ShouldBeMutedAsync(
+            TLevel level,
             string component,
-            string process,
-            string message)
+            string process)
         {
             if (!_mutePeriods.ContainsKey(level))
                 return false;

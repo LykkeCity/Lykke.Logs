@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Lykke.Common.Log;
-using Lykke.Logs;
+using Lykke.Logs.Loggers.LykkeConsole;
 using Microsoft.Extensions.Logging;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 

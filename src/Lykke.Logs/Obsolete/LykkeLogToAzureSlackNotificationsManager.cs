@@ -13,6 +13,7 @@ namespace Lykke.Logs
     /// <summary>
     /// Class for async sending of slack messages from internal queue.
     /// </summary>
+    [Obsolete("Use new Lykke logging system")]
     [PublicAPI]
     public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {
@@ -20,7 +21,7 @@ namespace Lykke.Logs
         private readonly ILog _lastResortLog;
         private readonly string _component;
         private readonly HashSet<string> _logLevels;
-        private readonly SpamGuard _spamGuard;
+        private readonly SpamGuard<LogLevel> _spamGuard;
 
         /// <summary>
         /// C-tor with a custom component name and default log levels collection.
@@ -95,7 +96,7 @@ namespace Lykke.Logs
             _lastResortLog = lastResortLog ?? new LogToConsole();
             _component = componentName;
             _logLevels = DefaultLogLevelsInit();
-            _spamGuard = new SpamGuard(lastResortLog ?? new LogToConsole());
+            _spamGuard = new SpamGuard<LogLevel>(lastResortLog ?? new LogToConsole());
             if (disableAntiSpam)
             {
                 _spamGuard.DisableGuarding();
@@ -153,7 +154,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.ErrorType:
                     {
-                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, componentName, entry.Process))
                             break;
 
                         var message = entry.Context != null
@@ -165,7 +166,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.WarningType:
                     {
-                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, componentName, entry.Process))
                             break;
 
                         var message = entry.Context != null
@@ -177,7 +178,7 @@ namespace Lykke.Logs
 
                     case LykkeLogToAzureStorage.MonitorType:
                     {
-                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, componentName, entry.Process, entry.Msg))
+                        if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, componentName, entry.Process))
                             break;
 
                         var message = entry.Context != null

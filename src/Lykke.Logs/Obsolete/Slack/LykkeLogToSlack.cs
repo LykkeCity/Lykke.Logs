@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using AsyncFriendlyStackTrace;
 using JetBrains.Annotations;
 using Common.Log;
 using Lykke.Common;
@@ -25,7 +26,7 @@ namespace Lykke.Logs.Slack
         private readonly bool _isErrorEnabled;
         private readonly bool _isFatalErrorEnabled;
         private readonly string _componentNamePrefix;
-        private readonly SpamGuard _spamGuard;
+        private readonly SpamGuard<LogLevel> _spamGuard;
 
         private LykkeLogToSlack(
             ISlackNotificationsSender sender,
@@ -45,7 +46,7 @@ namespace Lykke.Logs.Slack
 
             _componentNamePrefix = GetComponentNamePrefix();
 
-            _spamGuard = new SpamGuard(lastResortLog ?? new LogToConsole());
+            _spamGuard = new SpamGuard<LogLevel>(lastResortLog ?? new LogToConsole());
             if (disableAntiSpam)
             {
                 _spamGuard.DisableGuarding();
@@ -119,7 +120,7 @@ namespace Lykke.Logs.Slack
             if (!_isInfoEnabled)
                 return;
 
-            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Info, component, process, info))
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Info, component, process))
                 return;
 
             var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
@@ -131,7 +132,7 @@ namespace Lykke.Logs.Slack
             if (!_isMonitorEnabled)
                 return;
 
-            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, component, process, info))
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Monitoring, component, process))
                 return;
 
             var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
@@ -143,7 +144,7 @@ namespace Lykke.Logs.Slack
             if (!_isWarningEnabled)
                 return;
 
-            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, info))
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process))
                 return;
 
             var message = $"{GetComponentName(component)} : {process} : {info} : {context}";
@@ -156,10 +157,10 @@ namespace Lykke.Logs.Slack
             if (!_isWarningEnabled)
                 return;
 
-            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process, $"{info} : {ex?.Message}"))
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Warning, component, process))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {ex} : {info} : {context}";
+            var message = $"{GetComponentName(component)} : {process} : {ex?.ToAsyncString()} : {info} : {context}";
             await _sender.SendAsync(_channel, ":warning:", message);
         }
 
@@ -168,10 +169,10 @@ namespace Lykke.Logs.Slack
             if (!_isErrorEnabled)
                 return;
 
-            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, component, process, exception.Message))
+            if (await _spamGuard.ShouldBeMutedAsync(LogLevel.Error, component, process))
                 return;
 
-            var message = $"{GetComponentName(component)} : {process} : {exception} : {context}";
+            var message = $"{GetComponentName(component)} : {process} : {exception?.ToAsyncString()} : {context}";
             await _sender.SendAsync(_channel, ":exclamation:", message);
         }
 
@@ -180,7 +181,7 @@ namespace Lykke.Logs.Slack
         {
             if (_isFatalErrorEnabled)
             {
-                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component)} : {process} : {exception} : {context}");
+                return _sender.SendAsync(_channel, ":no_entry:", $"{GetComponentName(component)} : {process} : {exception?.ToAsyncString()} : {context}");
             }
 
             return Task.CompletedTask;

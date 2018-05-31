@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Logging.Console.Internal;
 using Microsoft.Extensions.Options;
 
-namespace Lykke.Logs
+namespace Lykke.Logs.Loggers.LykkeConsole
 {
     /// <inheritdoc />
     [ProviderAlias("Console")]
-    public sealed class LykkeConsoleLoggerProvider : ILoggerProvider
+    internal sealed class LykkeConsoleLoggerProvider : ILoggerProvider
     {
         private readonly ConcurrentDictionary<string, LykkeConsoleLogger> _loggers = new ConcurrentDictionary<string, LykkeConsoleLogger>();
 

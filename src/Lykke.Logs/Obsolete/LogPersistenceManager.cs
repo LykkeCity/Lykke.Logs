@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using AzureStorage;
 using Common;
 using Common.Log;
+using Lykke.Logs.AzureTablePersistence;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs
 {
+    [Obsolete("Use AzureTableLogPersistenceQueue")]
     public class LogPersistenceManager<TLogEntity> : ProducerConsumer<IEnumerable<TLogEntity>>, ILogPersistenceManager<TLogEntity> 
         where TLogEntity : ITableEntity, new()
     {
@@ -16,10 +18,6 @@ namespace Lykke.Logs
         private readonly ILogEntityRowKeyGenerator<TLogEntity> _rowKeyGenerator;
         private readonly ILog _lastResortLog;
 
-        /// <param name="componentName"></param>
-        /// <param name="tableStorage"></param>
-        /// <param name="rowKeyGenerator"></param>
-        /// <param name="lastResortLog"></param>
         public LogPersistenceManager(
             string componentName,
             INoSQLTableStorage<TLogEntity> tableStorage,
@@ -32,9 +30,6 @@ namespace Lykke.Logs
             _lastResortLog = lastResortLog ?? new LogToConsole();
         }
 
-        /// <param name="tableStorage"></param>
-        /// <param name="rowKeyGenerator"></param>
-        /// <param name="lastResortLog"></param>
         public LogPersistenceManager(
             INoSQLTableStorage<TLogEntity> tableStorage,
             ILogEntityRowKeyGenerator<TLogEntity> rowKeyGenerator,
