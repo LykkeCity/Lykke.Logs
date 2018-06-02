@@ -72,7 +72,7 @@ namespace Lykke.Logs
         }
 
         /// <inheritdoc />
-        public async Task NotifyAsync([NotNull] string healthMessage, [CanBeNull] object context)
+        public Task NotifyAsync([NotNull] string healthMessage, [CanBeNull] object context)
         {
             var sender = $":loudspeaker: {_appName} {_appVersion} : {_envInfo}";
 
@@ -90,7 +90,7 @@ namespace Lykke.Logs
 
             _log.Info(healthMessage, context);
 
-            await sendTask;
+            return sendTask;
         }
 
         private static ISlackNotificationsSender CreateSlackSender(string azureQueueConnectionString, string azureQueuesBaseName)

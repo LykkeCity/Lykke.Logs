@@ -6,7 +6,7 @@ namespace Lykke.Logs
 {
     internal static class LogLevels
     {
-        public static IReadOnlyList<Microsoft.Extensions.Logging.LogLevel> All { get; }
+        public static IReadOnlyCollection<Microsoft.Extensions.Logging.LogLevel> All { get; }
 
         static LogLevels()
         {

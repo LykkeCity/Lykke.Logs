@@ -69,6 +69,14 @@ namespace Lykke.Logs.AzureTablePersistence
             {
                 throw new ArgumentException("Should be not empty string", nameof(logName));
             }
+            if (batchSizeThreshold < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(batchSizeThreshold), batchSizeThreshold, "Should be positive number");
+            }
+            if (degreeOfPersistenceParallelism < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(degreeOfPersistenceParallelism), degreeOfPersistenceParallelism, "Should be positive number");
+            }
 
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _rowKeyGenerator = rowKeyGenerator ?? throw new ArgumentNullException(nameof(rowKeyGenerator));
