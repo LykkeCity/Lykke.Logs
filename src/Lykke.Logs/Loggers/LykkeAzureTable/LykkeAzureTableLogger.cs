@@ -23,11 +23,7 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
 
         void ILogger.Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            var parameters = state as LogEntryParameters;
-            if (parameters == null)
-            {
-                throw new InvalidOperationException("Expected an argument state with a type assignable to LogEntryParameters");
-            }
+            var parameters = state as LogEntryParameters ?? new ExternalLogEntryPerameters();
 
             var entry = LogEntity.CreateWithoutRowKey(
                 parameters.AppName,

@@ -74,21 +74,17 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
         public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
+            if (formatter == null)
+            {
+                throw new ArgumentNullException(nameof(formatter));
+            }
+
             if (!IsEnabled(logLevel))
             {
                 return;
             }
 
-            var callerInfo = state as LogEntryParameters;
-            if (callerInfo == null)
-            {
-                throw new ArgumentNullException(nameof(state), "Expected an argument state with a type assignable to LogEntryParameters");
-            }
-
-            if (formatter == null)
-            {
-                throw new ArgumentNullException(nameof(formatter));
-            }
+            var callerInfo = state as LogEntryParameters ?? new ExternalLogEntryPerameters();
 
             var message = formatter(state, exception);
 

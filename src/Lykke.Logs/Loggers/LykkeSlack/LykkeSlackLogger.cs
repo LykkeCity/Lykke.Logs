@@ -32,11 +32,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 return;
             }
 
-            var parameters = state as LogEntryParameters;
-            if (parameters == null)
-            {
-                throw new InvalidOperationException("Expected an argument state with a type assignable to LogEntryParameters");
-            }
+            var parameters = state as LogEntryParameters ?? new ExternalLogEntryPerameters();
 
             _sender.SendAsync(
                     logLevel,

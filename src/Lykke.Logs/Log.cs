@@ -13,7 +13,7 @@ namespace Lykke.Logs
 
         public Log(ILogger logger, IHealthNotifier healthNotifier)
         {
-            _logger = logger;
+            _logger = new ErrorsHandlerLoggerDecorator(logger);
             _healthNotifier = healthNotifier;
         }
 
