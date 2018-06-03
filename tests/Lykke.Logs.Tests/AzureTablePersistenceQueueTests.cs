@@ -102,7 +102,7 @@ namespace Lykke.Logs.Tests
             {
                 var logEntity = callInfo.Arg<Loggers.LykkeAzureTable.LogEntity>();
 
-                Assert.InRange(DateTimeOffset.UtcNow - logEntity.DateTime, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(1200));
+                Assert.InRange(DateTimeOffset.UtcNow - logEntity.DateTime, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(1300));
 
                 return string.Empty;
             });
@@ -178,7 +178,7 @@ namespace Lykke.Logs.Tests
                 await Task.Delay(TimeSpan.FromSeconds(2));
 
                 Assert.Equal(2, batchTimes.Count);
-                Assert.InRange(batchTimes.Last() - batchTimes.First(), TimeSpan.FromMilliseconds(900), TimeSpan.FromMilliseconds(1100));
+                Assert.InRange(batchTimes.Last() - batchTimes.First(), TimeSpan.FromMilliseconds(850), TimeSpan.FromMilliseconds(1150));
                 Assert.Equal(10, batchCounts.First());
                 Assert.Equal(1, batchCounts.Last());
             }

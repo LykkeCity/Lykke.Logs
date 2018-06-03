@@ -35,7 +35,7 @@ namespace Lykke.Logs.Tests
 
             var expected = $": {state.Moment:MM-dd HH:mm:ss.fff} : {_logger.Name} : {state.Process}{Environment.NewLine}      {state.Message}{Environment.NewLine}";
             
-            Thread.Sleep(50);
+            Thread.Sleep(100);
 
             _console.Received(1).Write("INFO", null, ConsoleColor.Gray);
             _console.Received(1).Write(expected, null, null);
