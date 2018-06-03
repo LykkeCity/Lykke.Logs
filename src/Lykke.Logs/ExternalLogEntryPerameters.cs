@@ -11,10 +11,10 @@ namespace Lykke.Logs
                 AppEnvironment.Name, 
                 AppEnvironment.Version, 
                 AppEnvironment.EnvInfo, 
-                string.Empty, 
-                string.Empty, 
+                "?", 
+                "?", 
                 1, 
-                string.Empty, 
+                "?", 
                 null, 
                 DateTime.UtcNow)
         {

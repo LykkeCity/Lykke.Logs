@@ -11,8 +11,12 @@ namespace ConsoleLoggerRunner
     {
         static void Main(string[] args)
         {
+            Environment.SetEnvironmentVariable("ENV_INFO", "test");
+
             var provider = new LykkeConsoleLoggerProvider((s, level) => true, false);
             var logger = provider.CreateLogger("ComponentName");
+
+            logger.LogInformation("test");
 
             for (int i = 0; i < 100; i++)
             {
