@@ -65,7 +65,7 @@ namespace Lykke.Logs
 
         Task ILog.WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime)
         {
-            this.Error(process, "", exception, context, dateTime);
+            this.Error(process, exception, null, context, dateTime);
 
             return Task.CompletedTask;
         }
@@ -73,7 +73,7 @@ namespace Lykke.Logs
         Task ILog.WriteFatalErrorAsync(string component, string process, string context, Exception exception,
             DateTime? dateTime)
         {
-            this.Critical(process, "", exception, context, dateTime);
+            this.Critical(process, exception, null, context, dateTime);
 
             return Task.CompletedTask;
         }
@@ -108,14 +108,14 @@ namespace Lykke.Logs
 
         Task ILog.WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime)
         {
-            this.Error(process, "", exception, context, dateTime);
+            this.Error(process, exception, null, context, dateTime);
 
             return Task.CompletedTask;
         }
 
         Task ILog.WriteFatalErrorAsync(string process, string context, Exception exception, DateTime? dateTime)
         {
-            this.Critical(process, "", exception, context, dateTime);
+            this.Critical(process, exception, null, context, dateTime);
 
             return Task.CompletedTask;
         }

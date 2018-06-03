@@ -39,7 +39,7 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
             [CanBeNull] string context,
             [CanBeNull] string type,
             [CanBeNull] string stack,
-            [NotNull] string msg,
+            [CanBeNull] string message,
             DateTime dateTime)
         {
             return new LogEntity
@@ -55,7 +55,7 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
                 Context = Truncate(context),
                 Type = type,
                 Stack = Truncate(stack),
-                Msg = Truncate(msg ?? throw new ArgumentNullException(nameof(msg)))
+                Msg = Truncate(message)
             };
         }
 

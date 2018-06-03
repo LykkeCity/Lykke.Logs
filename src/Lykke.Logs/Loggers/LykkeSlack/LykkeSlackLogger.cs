@@ -59,7 +59,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         {
             var sb = new StringBuilder();
 
-            if (formattedMessage != null)
+            if (!string.IsNullOrWhiteSpace(formattedMessage))
             {
                 sb.Append(formattedMessage);
             }
@@ -74,7 +74,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 sb.Append(exception.ToAsyncString());
             }
 
-            if (parameters.Context != null)
+            if (!string.IsNullOrWhiteSpace(parameters.Context))
             {
                 if (sb.Length > 0)
                 {
