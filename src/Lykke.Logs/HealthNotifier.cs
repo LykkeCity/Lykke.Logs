@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Lykke.AzureQueueIntegration;
 using Lykke.AzureQueueIntegration.Publisher;
@@ -66,7 +65,7 @@ namespace Lykke.Logs
         }
 
         /// <inheritdoc />
-        public Task NotifyAsync([NotNull] string healthMessage, [CanBeNull] object context)
+        public void Notify([NotNull] string healthMessage, [CanBeNull] object context)
         {
             var sender = $":loudspeaker: {_appName} {_appVersion} : {_envInfo}";
 
@@ -80,11 +79,10 @@ namespace Lykke.Logs
                 messageBuilder.Append(LogContextConversion.ConvertToString(context));
             }
 
-            var sendTask = _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender);
+            // TODO: Actually there is no IO, so ISlackNotificationsSender should be refactored to be synchronous
+            _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender).ConfigureAwait(false).GetAwaiter().GetResult();
 
             _logFactory.CreateLog(this).Info(healthMessage, context);
-
-            return sendTask;
         }
 
         private static ISlackNotificationsSender CreateSlackSender(string azureQueueConnectionString, string azureQueuesBaseName)

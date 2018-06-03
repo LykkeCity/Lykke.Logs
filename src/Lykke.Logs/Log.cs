@@ -43,7 +43,7 @@ namespace Lykke.Logs
 
         Task ILog.WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime)
         {
-            _healthNotifier.NotifyAsync(info, context);
+            _healthNotifier.Notify(info, context);
 
             return Task.CompletedTask;
         }
@@ -87,7 +87,7 @@ namespace Lykke.Logs
 
         Task ILog.WriteMonitorAsync(string process, string context, string info, DateTime? dateTime)
         {
-            _healthNotifier.NotifyAsync(info, context);
+            _healthNotifier.Notify(info, context);
 
             return Task.CompletedTask;
         }
