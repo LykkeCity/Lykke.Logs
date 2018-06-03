@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.AzureQueueIntegration;
 using Lykke.AzureQueueIntegration.Publisher;
@@ -17,12 +16,12 @@ namespace Lykke.Logs
     [PublicAPI]
     public class HealthNotifier : IHealthNotifier
     {
+        [NotNull] private readonly ILogFactory _logFactory;
         [NotNull] private readonly string _appName;
         [NotNull] private readonly string _appVersion;
         [NotNull] private readonly string _envInfo;
         [NotNull] private readonly ISlackNotificationsSender _slackSender;
-        [NotNull] private readonly ILog _log;
-
+        
         /// <summary>
         /// Creates lykke health notifier for the specific app
         /// </summary>
@@ -59,16 +58,11 @@ namespace Lykke.Logs
             [NotNull] ILogFactory logFactory,
             [NotNull] ISlackNotificationsSender slackSender)
         {
-            if (logFactory == null)
-            {
-                throw new ArgumentNullException(nameof(logFactory));
-            }
-
             _appName = appName ?? throw new ArgumentNullException(nameof(appName));
             _appVersion = appVersion ?? throw new ArgumentNullException(nameof(appVersion));
             _envInfo = envInfo ?? throw new ArgumentNullException(nameof(envInfo));
+            _logFactory = logFactory ?? throw new ArgumentNullException(nameof(logFactory));
             _slackSender = slackSender ?? throw new ArgumentNullException(nameof(slackSender));
-            _log = logFactory.CreateLog(this);
         }
 
         /// <inheritdoc />
@@ -88,7 +82,7 @@ namespace Lykke.Logs
 
             var sendTask = _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender);
 
-            _log.Info(healthMessage, context);
+            _logFactory.CreateLog(this).Info(healthMessage, context);
 
             return sendTask;
         }

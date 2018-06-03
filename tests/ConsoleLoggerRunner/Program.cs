@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Lykke.Common.Log;
+using Lykke.Logs;
 using Lykke.Logs.Loggers.LykkeConsole;
 using Microsoft.Extensions.Logging;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -14,7 +15,7 @@ namespace ConsoleLoggerRunner
             Environment.SetEnvironmentVariable("ENV_INFO", "test");
 
             var provider = new LykkeConsoleLoggerProvider((s, level) => true, false);
-            var logger = provider.CreateLogger("ComponentName");
+            var logger = new ErrorsHandlingLoggerDecorator(provider.CreateLogger("ComponentName"));
 
             logger.LogInformation("test");
 

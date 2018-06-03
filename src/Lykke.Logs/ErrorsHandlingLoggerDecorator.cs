@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs
 {
-    internal sealed class ErrorsHandlerLoggerDecorator : ILogger
+    internal sealed class ErrorsHandlingLoggerDecorator : ILogger
     {
         [NotNull] private readonly ILogger _logger;
 
-        public ErrorsHandlerLoggerDecorator([NotNull] ILogger logger)
+        public ErrorsHandlingLoggerDecorator([NotNull] ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
