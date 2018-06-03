@@ -34,9 +34,7 @@ namespace Lykke.Logs
                 AppEnvironment.Name,
                 AppEnvironment.Version,
                 AppEnvironment.EnvInfo,
-                // TODO: Regular log factory would be used when legacy methods will be removed from the ILog. 
-                // At the moment it can't be used, to prevent circular services dependency
-                LastResortLogFactory.Instance,
+                s.GetRequiredService<ILogFactory>(),
                 azureQueueConnectionString,
                 azureQueuesBaseName));
 

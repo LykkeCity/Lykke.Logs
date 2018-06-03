@@ -93,8 +93,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
                 WriteMessage(logLevel, callerInfo, Name, message, exception);
             }
         }
-
-
+        
         private void WriteMessage(Microsoft.Extensions.Logging.LogLevel logLevel, LogEntryParameters callerInfo, string logName, string message, Exception exception)
         {
             var logBuilder = _logBuilder;
