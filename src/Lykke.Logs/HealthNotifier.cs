@@ -88,7 +88,7 @@ namespace Lykke.Logs
         private static ISlackNotificationsSender CreateSlackSender(string azureQueueConnectionString, string azureQueuesBaseName)
         {
             var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
-                    LastResortLogFactory.Instance,
+                    DirectConsoleLogFactory.Instance,
                     new SlackNotificationsSerializer(),
                     "Health notifier",
                     new AzureQueueSettings

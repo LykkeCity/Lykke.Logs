@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Logging.Console.Internal;
-using Microsoft.Extensions.Options;
 
 namespace Lykke.Logs.Loggers.LykkeConsole
 {
@@ -15,56 +14,44 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         private readonly ConcurrentDictionary<string, LykkeConsoleLogger> _loggers = new ConcurrentDictionary<string, LykkeConsoleLogger>();
 
         private readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> _filter;
+        private readonly bool _includeScopes;
+
+        private readonly IConsoleLogMessageWriter _messageWriter;
+
         private IConsoleLoggerSettings _settings;
-        private readonly ConsoleLoggerProcessor _messageQueue = new ConsoleLoggerProcessor();
-
-        private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> TrueFilter = (cat, level) => true;
+        
         private static readonly Func<string, Microsoft.Extensions.Logging.LogLevel, bool> FalseFilter = (cat, level) => false;
-        private readonly IDisposable _optionsReloadToken;
-        private bool _includeScopes;
-
-
-        /// <summary>
-        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
-        /// </summary>
-        /// <param name="filter">A filter method</param>
-        /// <param name="includeScopes">Use scopes flag</param>
-        public LykkeConsoleLoggerProvider(Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
+        
+        public LykkeConsoleLoggerProvider(
+            [NotNull] Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, 
+            bool includeScopes,
+            [NotNull] IConsoleLogMessageWriter writer)
         {
             _filter = filter ?? throw new ArgumentNullException(nameof(filter));
             _includeScopes = includeScopes;
-        }
 
-        /// <summary>
-        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
-        /// </summary>
-        /// <param name="options"></param>
-        public LykkeConsoleLoggerProvider(IOptionsMonitor<ConsoleLoggerOptions> options)
-        {
-            // Filter would be applied on LoggerFactory level
-            _filter = TrueFilter;
-            _optionsReloadToken = options.OnChange(ReloadLoggerOptions);
-            ReloadLoggerOptions(options.CurrentValue);
-        }
-
-        private void ReloadLoggerOptions(ConsoleLoggerOptions options)
-        {
-            _includeScopes = options.IncludeScopes;
-            foreach (var logger in _loggers.Values)
+            if (writer == null)
             {
-                logger.IncludeScopes = _includeScopes;
+                throw new ArgumentNullException(nameof(writer));
             }
+
+            _messageWriter = new BufferedConsoleLogMessageWriterDecorator(writer);
         }
 
-        /// <summary>
-        /// Creates a new instance of <see cref="LykkeConsoleLoggerProvider"/>
-        /// </summary>
-        /// <param name="settings">Initialization settings</param>
-        public LykkeConsoleLoggerProvider(IConsoleLoggerSettings settings)
+        public LykkeConsoleLoggerProvider(
+            [NotNull] IConsoleLoggerSettings settings,
+            [NotNull] IConsoleLogMessageWriter writer)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
             _settings.ChangeToken?.RegisterChangeCallback(OnConfigurationReload, null);
+
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            _messageWriter = new BufferedConsoleLogMessageWriterDecorator(writer);
         }
 
         private void OnConfigurationReload(object state)
@@ -102,7 +89,8 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         private LykkeConsoleLogger CreateLoggerImplementation(string name)
         {
             var includeScopes = _settings?.IncludeScopes ?? _includeScopes;
-            return new LykkeConsoleLogger(name, GetFilter(name, _settings), includeScopes, _messageQueue);
+
+            return new LykkeConsoleLogger(name, GetFilter(name, _settings), includeScopes, _messageWriter);
         }
 
         private Func<string, Microsoft.Extensions.Logging.LogLevel, bool> GetFilter(string name, IConsoleLoggerSettings settings)
@@ -144,8 +132,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         /// <inheritdoc />
         public void Dispose()
         {
-            _optionsReloadToken?.Dispose();
-            _messageQueue.Dispose();
+            _messageWriter.Dispose();
         }
     }
 }

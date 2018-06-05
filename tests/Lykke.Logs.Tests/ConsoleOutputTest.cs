@@ -9,21 +9,19 @@ using Xunit;
 
 namespace Lykke.Logs.Tests
 {
-    public class ConsoleOutputTest
+    public class ConsoleOutputTest : IDisposable
     {
-        private readonly LykkeConsoleLogger _logger;
+        private readonly ILogger _logger;
         private readonly IConsole _console;
+        private readonly LykkeConsoleLoggerProvider _provider;
 
         public ConsoleOutputTest()
         {
             _console = Substitute.For<IConsole>();
-
             
-            var logger = new LykkeConsoleLogger("MyLogger", (s, level) => true, false)
-            {
-                Console = _console
-            };
-            _logger = logger;
+            _provider = new LykkeConsoleLoggerProvider((s, level) => true, false, new ConsoleLogMessageWriter(_console));
+
+            _logger = _provider.CreateLogger("MyLogger");
         }
 
         [Fact]
@@ -33,7 +31,7 @@ namespace Lykke.Logs.Tests
 
             _logger.Log(Microsoft.Extensions.Logging.LogLevel.Information, new EventId(0), state, null, (parameters, exception) => parameters.Message);
 
-            var expected = $": {state.Moment:MM-dd HH:mm:ss.fff} : {_logger.Name} : {state.Process}{Environment.NewLine}      {state.Message}{Environment.NewLine}";
+            var expected = $": {state.Moment:MM-dd HH:mm:ss.fff} : MyLogger : {state.Process}{Environment.NewLine}      {state.Message}{Environment.NewLine}";
             
             Thread.Sleep(100);
 
@@ -44,14 +42,22 @@ namespace Lykke.Logs.Tests
         [Fact]
         public void ProviderShouldReturnCorrectLogger()
         {
-            var provider = new LykkeConsoleLoggerProvider(Filter, false);
-            var logger = provider.CreateLogger("SupperLogger");
-            Assert.IsType<LykkeConsoleLogger>(logger);
+            using (var provider = new LykkeConsoleLoggerProvider(Filter, false, Substitute.For<IConsoleLogMessageWriter>()))
+            {
+                var logger = provider.CreateLogger("SupperLogger");
+
+                Assert.IsType<LykkeConsoleLogger>(logger);
+            }
         }
 
         private static bool Filter(string arg1, Microsoft.Extensions.Logging.LogLevel arg2)
         {
             return true;
+        }
+
+        public void Dispose()
+        {
+            _provider.Dispose();
         }
     }
 }

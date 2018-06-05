@@ -1,21 +1,24 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Common.Log;
-using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
 using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
-    internal sealed class LastResortLog : ILog
+    internal sealed class DirectConsoleLog : ILog
     {
         private readonly ILog _log;
 
-        public LastResortLog(string componentName)
+        public DirectConsoleLog(string componentName)
         {
-            var logger = new LykkeConsoleLogger(componentName, (s, l) => true, true);
+            var logger = new LykkeConsoleLogger(
+                componentName, 
+                (s, l) => true, 
+                true,
+                ConsoleLogMessageWriter.Instance);
 
-            _log = new Log(logger, new EmptyHealthNotifier());
+            _log = new Log(logger, ConsoleHealthNotifier.Instance);
         }
 
         void ILog.Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
@@ -33,67 +36,66 @@ namespace Lykke.Logs
             return _log.BeginScope(scopeMessage);
         }
 
-        #region Not implemented obsolete methods
+        #region Obsolete methods
 
         Task ILog.WriteInfoAsync(string component, string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteInfoAsync(component, process, context, info, dateTime);
         }
 
         Task ILog.WriteMonitorAsync(string component, string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteMonitorAsync(component, process, context, info, dateTime);
         }
 
         Task ILog.WriteWarningAsync(string component, string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteWarningAsync(component, process, context, info, dateTime);
         }
 
         Task ILog.WriteWarningAsync(string component, string process, string context, string info, Exception ex, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteWarningAsync(component, process, context, info, ex, dateTime);
         }
 
         Task ILog.WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteErrorAsync(component, process, context, exception, dateTime);
         }
 
-        Task ILog.WriteFatalErrorAsync(string component, string process, string context, Exception exception,
-            DateTime? dateTime)
+        Task ILog.WriteFatalErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteFatalErrorAsync(component, process, context, exception, dateTime);
         }
 
         Task ILog.WriteInfoAsync(string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteInfoAsync(process, context, info, dateTime);
         }
 
         Task ILog.WriteMonitorAsync(string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteMonitorAsync(process, context, info, dateTime);
         }
 
         Task ILog.WriteWarningAsync(string process, string context, string info, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteWarningAsync(process, context, info, dateTime);
         }
 
         Task ILog.WriteWarningAsync(string process, string context, string info, Exception ex, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteWarningAsync(process, context, info, ex, dateTime);
         }
 
         Task ILog.WriteErrorAsync(string process, string context, Exception exception, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteErrorAsync(process, context, exception, dateTime);
         }
 
         Task ILog.WriteFatalErrorAsync(string process, string context, Exception exception, DateTime? dateTime)
         {
-            throw new NotImplementedException();
+            return _log.WriteFatalErrorAsync(process, context, exception, dateTime);
         }
 
         #endregion

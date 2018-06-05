@@ -30,7 +30,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(LastResortLogFactory.Instance);
+            var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(DirectConsoleLogFactory.Instance);
 
             foreach (var level in new[]
             {
@@ -98,7 +98,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 throw new ArgumentNullException(nameof(channel));
             }
 
-            var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(LastResortLogFactory.Instance);
+            var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(DirectConsoleLogFactory.Instance);
 
             foreach (var level in new []
             {

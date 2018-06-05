@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Text;
 using AsyncFriendlyStackTrace;
+using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
@@ -11,15 +11,14 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 {
     internal sealed class LykkeConsoleLogger : ILogger
     {
+        private readonly IConsoleLogMessageWriter _writer;
         private static readonly string LogLevelPadding = ": ";
         private static readonly string MessagePadding;
         private static readonly string NewLineWithMessagePadding;
-
-
+        
         // ConsoleColor does not have a value to specify the 'Default' color
         private readonly ConsoleColor? _defaultConsoleColor = null;
 
-        private readonly ConsoleLoggerProcessor _queueProcessor;
         private Func<string, Microsoft.Extensions.Logging.LogLevel, bool> _filter;
 
         [ThreadStatic]
@@ -30,36 +29,19 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             var logLevelString = GetLogLevelString(Microsoft.Extensions.Logging.LogLevel.Information);
             MessagePadding = new string(' ', logLevelString.Length + LogLevelPadding.Length);
             NewLineWithMessagePadding = Environment.NewLine + MessagePadding;
-
         }
 
-        public LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes)
-            : this(name, filter, includeScopes, new ConsoleLoggerProcessor())
-        {
-        }
-
-        internal LykkeConsoleLogger(string name, Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter, bool includeScopes, ConsoleLoggerProcessor loggerProcessor)
+        public LykkeConsoleLogger(
+            [NotNull] string name,
+            [CanBeNull] Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter,
+            bool includeScopes,
+            [NotNull] IConsoleLogMessageWriter writer)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Filter = filter ?? ((category, logLevel) => true);
+            _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+
             IncludeScopes = includeScopes;
-
-            _queueProcessor = loggerProcessor;
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Console = new WindowsLogConsole();
-            }
-            else
-            {
-                Console = new AnsiLogConsole(new AnsiSystemConsole());
-            }
-        }
-
-        public IConsole Console
-        {
-            get => _queueProcessor.Console;
-            set => _queueProcessor.Console = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public Func<string, Microsoft.Extensions.Logging.LogLevel, bool> Filter
@@ -152,7 +134,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             {
                 var hasLevel = !string.IsNullOrEmpty(logLevelString);
                 // Queue log message
-                _queueProcessor.EnqueueMessage(new LogMessageEntry
+                _writer.Write(new LogMessageEntry
                 {
                     Message = logBuilder.ToString(),
                     MessageColor = _defaultConsoleColor,
@@ -268,19 +250,6 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             public ConsoleColor? Foreground { get; }
 
             public ConsoleColor? Background { get; }
-        }
-
-        private class AnsiSystemConsole : IAnsiSystemConsole
-        {
-            public void Write(string message)
-            {
-                System.Console.Write(message);
-            }
-
-            public void WriteLine(string message)
-            {
-                System.Console.WriteLine(message);
-            }
         }
     }
 }

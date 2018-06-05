@@ -8,23 +8,23 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 namespace Lykke.Logs
 {
     /// <summary>
-    /// Last resort log factory. It logs only to the console and can't be filtered out. 
-    /// Could be used to log events of logging system, when more complex loggers faced with failure
+    /// Direct (not buffered) console log factory. It logs only to the console and can't be filtered out. 
+    /// Could be used to log events of logging system, when more complex loggers faced with failure and in the tests
     /// </summary>
     [PublicAPI]
-    public sealed class LastResortLogFactory : ILogFactory
+    public sealed class DirectConsoleLogFactory : ILogFactory
     {
         /// <summary>
         /// Instance of the last resort log factory
         /// </summary>
         [NotNull]
-        public static ILogFactory Instance { get; } = new LastResortLogFactory();
+        public static ILogFactory Instance { get; } = new DirectConsoleLogFactory();
 
-        private readonly ConcurrentDictionary<(Type Type, string Suffix), LastResortLog> _logs;
+        private readonly ConcurrentDictionary<(Type Type, string Suffix), DirectConsoleLog> _logs;
 
-        private LastResortLogFactory()
+        private DirectConsoleLogFactory()
         {
-            _logs = new ConcurrentDictionary<(Type, string), LastResortLog>();
+            _logs = new ConcurrentDictionary<(Type, string), DirectConsoleLog>();
         }
 
         public ILog CreateLog<TComponent>(TComponent component, string componentNameSuffix)
@@ -35,7 +35,7 @@ namespace Lykke.Logs
                     ? $"{TypeNameHelper.GetTypeDisplayName(key.Type)}[{key.Suffix}]"
                     : TypeNameHelper.GetTypeDisplayName(key.Type);
 
-                return new LastResortLog(componentName);
+                return new DirectConsoleLog(componentName);
             });
         }
 
@@ -43,6 +43,5 @@ namespace Lykke.Logs
         {
             return CreateLog(component, null);
         }
-
     }
 }

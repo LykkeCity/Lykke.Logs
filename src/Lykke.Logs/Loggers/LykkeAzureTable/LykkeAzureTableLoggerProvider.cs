@@ -23,13 +23,13 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
         {
             _loggers = new ConcurrentDictionary<string, LykkeAzureTableLogger>();
             
-            var storage = AzureTableStorage<LogEntity>.Create(connectionString, tableName, LastResortLogFactory.Instance);
+            var storage = AzureTableStorage<LogEntity>.Create(connectionString, tableName, DirectConsoleLogFactory.Instance);
 
             _persistenceQueue = new AzureTableLogPersistenceQueue<LogEntity>(
                 storage,
                 new LykkeLogToAzureEntityRowKeyGenerator(),
                 "General log",
-                LastResortLogFactory.Instance,
+                DirectConsoleLogFactory.Instance,
                 maxBatchLifetime,
                 batchSizeThreshold,
                 // 2 is enough since we have yyyy-MM-dd as PK and batch will not be greater than a day for sure.

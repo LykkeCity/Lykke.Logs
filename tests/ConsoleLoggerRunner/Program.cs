@@ -14,42 +14,61 @@ namespace ConsoleLoggerRunner
         {
             Environment.SetEnvironmentVariable("ENV_INFO", "test");
 
-            var provider = new LykkeConsoleLoggerProvider((s, level) => true, false);
-            var logger = new ErrorsHandlingLoggerDecorator(provider.CreateLogger("ComponentName"));
-
-            logger.LogInformation("test");
-
-            for (int i = 0; i < 100; i++)
+            using (var provider = new LykkeConsoleLoggerProvider((s, level) => true, false, ConsoleLogMessageWriter.Instance))
             {
-                logger.Log(LogLevel.Warning, new EventId(0), GetState(), null, (parameters, exception) => parameters.Message);
-                logger.Log(LogLevel.Critical, new EventId(0), GetState(), new OutOfMemoryException("Good buy"), (parameters, exception) => parameters.Message);
+                var logger = new ErrorsHandlingLoggerDecorator(provider.CreateLogger("ComponentName"));
+
+                logger.LogInformation("test");
+
+                for (int i = 0; i < 100; i++)
+                {
+                    logger.Log(LogLevel.Warning, new EventId(0), GetState(), null,
+                        (parameters, exception) => parameters.Message);
+                    logger.Log(LogLevel.Critical, new EventId(0), GetState(), new OutOfMemoryException("Good buy"),
+                        (parameters, exception) => parameters.Message);
+                }
+
+                logger.Log(LogLevel.Trace, new EventId(0), GetState(), null,
+                    (parameters, exception) => parameters.Message);
+                logger.Log(LogLevel.Debug, new EventId(0), GetState(), null,
+                    (parameters, exception) => parameters.Message);
+                logger.Log(LogLevel.Information, new EventId(0), GetState(), null,
+                    (parameters, exception) => $"A long{Environment.NewLine}message");
+                logger.Log(LogLevel.Warning, new EventId(0), GetState(), null,
+                    (parameters, exception) => parameters.Message);
+
+
+                logger.Log(LogLevel.Error, new EventId(0), GetState(),
+                    new InvalidOperationException("Something goes wrong"),
+                    (parameters, exception) => parameters.Message);
+                logger.Log(LogLevel.Critical, new EventId(0), GetState(), new OutOfMemoryException("Good buy"),
+                    (parameters, exception) => parameters.Message);
+
+
+                Thread.Sleep(100);
+                using (var scopedProvider = new LykkeConsoleLoggerProvider((s, level) => true, true, ConsoleLogMessageWriter.Instance))
+                {
+                    var scopedLogger = scopedProvider.CreateLogger("ScopedComponent");
+                    scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null,
+                        (parameters, exception) => "Begin scope");
+
+                    using (scopedLogger.BeginScope("Hi I am a scope {0}", 1))
+                    {
+                        scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null,
+                            (parameters, exception) => parameters.Message);
+                        scopedLogger.Log(LogLevel.Error, new EventId(0), GetState(),
+                            new InvalidOperationException("Something goes wrong"),
+                            (parameters, exception) => parameters.Message);
+                        scopedLogger.Log(LogLevel.Critical, new EventId(0), GetState(),
+                            new OutOfMemoryException("Good buy"), (parameters, exception) => parameters.Message);
+                    }
+
+                    scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null,
+                        (parameters, exception) => "End scope");
+
+                    Console.ReadLine();
+                }
             }
-
-            logger.Log(LogLevel.Trace, new EventId(0), GetState(), null, (parameters, exception) => parameters.Message);
-            logger.Log(LogLevel.Debug, new EventId(0), GetState(), null, (parameters, exception) => parameters.Message);
-            logger.Log(LogLevel.Information, new EventId(0), GetState(), null, (parameters, exception) => $"A long{Environment.NewLine}message");
-            logger.Log(LogLevel.Warning, new EventId(0), GetState(), null, (parameters, exception) => parameters.Message);
-
-
-            logger.Log(LogLevel.Error, new EventId(0), GetState(), new InvalidOperationException("Something goes wrong"), (parameters, exception) => parameters.Message);
-            logger.Log(LogLevel.Critical, new EventId(0), GetState(), new OutOfMemoryException("Good buy"), (parameters, exception) => parameters.Message);
-
-
-            Thread.Sleep(100);
-            var scopedProvider = new LykkeConsoleLoggerProvider((s, level) => true, true);
-            var scopedLogger = scopedProvider.CreateLogger("ScopedComponent");
-            scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null, (parameters, exception) => "Begin scope");
-
-            using (scopedLogger.BeginScope("Hi I am a scope {0}", 1))
-            {
-                scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null, (parameters, exception) => parameters.Message);
-                scopedLogger.Log(LogLevel.Error, new EventId(0), GetState(), new InvalidOperationException("Something goes wrong"), (parameters, exception) => parameters.Message);
-                scopedLogger.Log(LogLevel.Critical, new EventId(0), GetState(), new OutOfMemoryException("Good buy"), (parameters, exception) => parameters.Message);
-            }
-
-            scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null, (parameters, exception) => "End scope");
-
-            Console.ReadLine();
         }
 
         private static LogEntryParameters GetState()

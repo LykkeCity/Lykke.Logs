@@ -94,7 +94,10 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter,
             bool includeScopes)
         {
-            factory.AddProvider(new LykkeConsoleLoggerProvider(filter, includeScopes));
+            var provider = new LykkeConsoleLoggerProvider(filter, includeScopes, ConsoleLogMessageWriter.Instance);
+
+            factory.AddProvider(provider);
+
             return factory;
         }
 
@@ -108,7 +111,10 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             this ILoggerFactory factory,
             IConsoleLoggerSettings settings)
         {
-            factory.AddProvider(new LykkeConsoleLoggerProvider(settings));
+            var provider = new LykkeConsoleLoggerProvider(settings, ConsoleLogMessageWriter.Instance);
+
+            factory.AddProvider(provider);
+
             return factory;
         }
 

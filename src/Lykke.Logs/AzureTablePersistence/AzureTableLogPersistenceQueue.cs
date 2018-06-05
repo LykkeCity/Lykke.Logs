@@ -42,7 +42,7 @@ namespace Lykke.Logs.AzureTablePersistence
         /// <param name="storage">Storage to which log entries should be persisted</param>
         /// <param name="rowKeyGenerator">Log entries row keys generator</param>
         /// <param name="logName">Name of the log. Will be used to log failures to the <paramref name="lastResortLogFactory"/> log</param>
-        /// <param name="lastResortLogFactory">Last resort log factory. Usually <see cref="LastResortLogFactory.Instance"/></param>
+        /// <param name="lastResortLogFactory">Last resort log factory. Usually <see cref="DirectConsoleLogFactory.Instance"/></param>
         /// <param name="maxBatchLifetime">
         /// Max time for which entries will be keeped in the in-memory buffer before they will be persisted.
         /// This setting affects max latency before entry will be persisted.
@@ -84,7 +84,7 @@ namespace Lykke.Logs.AzureTablePersistence
             _degreeOfPersistenceParallelism = degreeOfPersistenceParallelism;
             _maxBatchLifetime = maxBatchLifetime ?? TimeSpan.FromSeconds(5);
 
-            lastResortLogFactory = lastResortLogFactory ?? LastResortLogFactory.Instance;
+            lastResortLogFactory = lastResortLogFactory ?? DirectConsoleLogFactory.Instance;
 
             _log = lastResortLogFactory.CreateLog(this);
 
