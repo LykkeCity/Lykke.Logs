@@ -10,6 +10,10 @@ namespace Lykke.Logs
     {
         public static EmptyLog Instance { get; } = new EmptyLog();
 
+        private EmptyLog()
+        {
+        }
+
         void ILog.Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
         }

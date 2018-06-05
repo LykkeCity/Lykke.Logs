@@ -51,7 +51,7 @@ namespace Lykke.Logs
             int batchSizeThreshold = 100,
             bool ownPersistenceManager = true,
             bool ownSlackNotificationsManager = true)
-            : base(applicationName, periodMs: 20, log: lastResortLog ?? new EmptyLog())
+            : base(applicationName, periodMs: 20, log: lastResortLog ?? EmptyLog.Instance)
         {
             _persistenceManager = persistenceManager;
             _slackNotificationsManager = slackNotificationsManager;
@@ -83,7 +83,7 @@ namespace Lykke.Logs
             int batchSizeThreshold = 100,
             bool ownPersistenceManager = true,
             bool ownSlackNotificationsManager = true)
-            : base(periodMs: 20, log: lastResortLog ?? new EmptyLog())
+            : base(periodMs: 20, log: lastResortLog ?? EmptyLog.Instance)
         {
             _persistenceManager = persistenceManager;
             _slackNotificationsManager = slackNotificationsManager;

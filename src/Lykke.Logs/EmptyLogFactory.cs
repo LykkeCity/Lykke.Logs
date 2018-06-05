@@ -16,6 +16,10 @@ namespace Lykke.Logs
         /// </summary>
         public static ILogFactory Instance { get; } = new EmptyLogFactory();
 
+        private EmptyLogFactory()
+        {
+        }
+
         /// <inheritdoc />
         public ILog CreateLog<TComponent>(TComponent component, string componentNameSuffix)
         {
