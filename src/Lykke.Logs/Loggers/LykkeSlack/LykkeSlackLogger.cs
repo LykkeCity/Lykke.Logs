@@ -10,16 +10,16 @@ namespace Lykke.Logs.Loggers.LykkeSlack
 {
     internal sealed class LykkeSlackLogger : ILogger
     {
-        private readonly string _categoryName;
+        private readonly string _componentName;
         private readonly Func<Microsoft.Extensions.Logging.LogLevel, string> _channelResolver;
         private readonly ISlackLogEntriesSender _sender;
 
         public LykkeSlackLogger(
             [NotNull] ISlackLogEntriesSender sender,
-            [NotNull] string categoryName,
+            [NotNull] string componentName,
             [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver)
         {
-            _categoryName = categoryName ?? throw new ArgumentNullException(categoryName);
+            _componentName = componentName ?? throw new ArgumentNullException(componentName);
             _sender = sender ?? throw new ArgumentNullException(nameof(sender));
             _channelResolver = channelResolver ?? throw new ArgumentNullException(nameof(channelResolver));
         }
@@ -98,16 +98,16 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 sb.Append($" : {parameters.EnvInfo}");
             }
 
-            if (_categoryName.StartsWith(parameters.AppName))
+            if (_componentName.StartsWith(parameters.AppName))
             {
-                if (_categoryName.Length > parameters.AppName.Length)
+                if (_componentName.Length > parameters.AppName.Length)
                 {
-                    sb.Append($" : {_categoryName.Substring(parameters.AppName.Length)}");
+                    sb.Append($" : {_componentName.Substring(parameters.AppName.Length)}");
                 }
             }
             else
             {
-                sb.Append($" : {_categoryName}");
+                sb.Append($" : {_componentName}");
             }
 
             return sb.ToString();

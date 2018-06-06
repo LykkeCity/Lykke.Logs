@@ -10,14 +10,14 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
 {
     internal sealed class LykkeAzureTableLogger : ILogger
     {
-        [NotNull] private readonly string _categoryName;
+        [NotNull] private readonly string _componentName;
         [NotNull] private readonly IAzureTableLogPersistenceQueue<LogEntity> _persistenceQueue;
 
         public LykkeAzureTableLogger(
-            [NotNull] string categoryName, 
+            [NotNull] string componentName, 
             [NotNull] IAzureTableLogPersistenceQueue<LogEntity> persistenceQueue)
         {
-            _categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
+            _componentName = componentName ?? throw new ArgumentNullException(nameof(componentName));
             _persistenceQueue = persistenceQueue ?? throw new ArgumentNullException(nameof(persistenceQueue));
         }
 
@@ -30,7 +30,7 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
                 parameters.AppVersion,
                 parameters.EnvInfo,
                 GetLogLevelString(logLevel),
-                _categoryName, 
+                _componentName, 
                 parameters.Process, 
                 parameters.Context, 
                 exception?.GetType().ToString(), 

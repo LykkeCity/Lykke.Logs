@@ -36,14 +36,14 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
                 degreeOfPersistenceParallelism: 2);
         }
 
-        public ILogger CreateLogger(string categoryName)
+        public ILogger CreateLogger(string componentName)
         {
-            return _loggers.GetOrAdd(categoryName, CreateLoggerImplementation);
+            return _loggers.GetOrAdd(componentName, CreateLoggerImplementation);
         }
 
-        private LykkeAzureTableLogger CreateLoggerImplementation(string categoryName)
+        private LykkeAzureTableLogger CreateLoggerImplementation(string componentName)
         {
-            return new LykkeAzureTableLogger(categoryName, _persistenceQueue);
+            return new LykkeAzureTableLogger(componentName, _persistenceQueue);
         }
 
         public void Dispose()

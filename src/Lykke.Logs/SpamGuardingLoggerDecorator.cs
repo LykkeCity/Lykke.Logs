@@ -12,11 +12,11 @@ namespace Lykke.Logs
         private readonly ISpamGuard<Microsoft.Extensions.Logging.LogLevel> _spamGuard;
 
         public SpamGuardingLoggerDecorator(
-            [NotNull] string categoryName,
+            [NotNull] string componentName,
             [NotNull] ILogger logger,
             [NotNull] ISpamGuard<Microsoft.Extensions.Logging.LogLevel> spamGuard)
         {
-            _componentName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
+            _componentName = componentName ?? throw new ArgumentNullException(nameof(componentName));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _spamGuard = spamGuard ?? throw new ArgumentNullException(nameof(spamGuard));
         }

@@ -27,16 +27,16 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             _sender = new SlackLogEntriesSender(azureQueueConnectionString, azureQueuesBaseName);
         }
 
-        public ILogger CreateLogger(string categoryName)
+        public ILogger CreateLogger(string componentName)
         {
-            return _loggers.GetOrAdd(categoryName, CreateLoggerImplementation);
+            return _loggers.GetOrAdd(componentName, CreateLoggerImplementation);
         }
 
-        private ILogger CreateLoggerImplementation(string categoryName)
+        private ILogger CreateLoggerImplementation(string componentName)
         {
             return new SpamGuardingLoggerDecorator(
-                categoryName,
-                new LykkeSlackLogger(_sender, categoryName, _channelResolver),
+                componentName,
+                new LykkeSlackLogger(_sender, componentName, _channelResolver),
                 _spamGuard);
         }
 
