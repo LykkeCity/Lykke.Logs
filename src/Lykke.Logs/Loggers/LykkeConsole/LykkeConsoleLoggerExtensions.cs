@@ -16,7 +16,8 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
         public static ILoggingBuilder AddLykkeConsole(this ILoggingBuilder builder)
         {
-            builder.Services.AddSingleton<ILoggerProvider, LykkeConsoleLoggerProvider>();
+            builder.Services.AddSingleton<ILoggerProvider, LykkeConsoleLoggerProvider>(s => 
+                new LykkeConsoleLoggerProvider((component, level) => true, true, ConsoleLogMessageWriter.Instance));
 
             return builder;
         }
