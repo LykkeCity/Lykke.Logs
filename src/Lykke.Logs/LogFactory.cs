@@ -28,7 +28,7 @@ namespace Lykke.Logs
                 throw new ArgumentException("Should be not empty string", nameof(componentNameSuffix));
             }
 
-            return new Log(_loggerFactory.CreateLogger($"{TypeNameHelper.GetTypeDisplayName(component.GetType())}[{componentNameSuffix}]"), _healthNotifierProvider.Value);
+            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Value);
         }
 
         public ILog CreateLog<TComponent>(TComponent component)
@@ -38,7 +38,7 @@ namespace Lykke.Logs
                 throw new ArgumentNullException(nameof(component));
             }
 
-            return new Log(_loggerFactory.CreateLogger(TypeNameHelper.GetTypeDisplayName(component.GetType())), _healthNotifierProvider.Value);
+            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Value);
         }
     }
 }

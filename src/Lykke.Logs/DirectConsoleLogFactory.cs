@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs
 {
@@ -20,23 +18,18 @@ namespace Lykke.Logs
         [NotNull]
         public static ILogFactory Instance { get; } = new DirectConsoleLogFactory();
 
-        private readonly ConcurrentDictionary<(Type Type, string Suffix), DirectConsoleLog> _logs;
+        private readonly ConcurrentDictionary<string, DirectConsoleLog> _logs;
 
         private DirectConsoleLogFactory()
         {
-            _logs = new ConcurrentDictionary<(Type, string), DirectConsoleLog>();
+            _logs = new ConcurrentDictionary<string, DirectConsoleLog>();
         }
 
         public ILog CreateLog<TComponent>(TComponent component, string componentNameSuffix)
         {
-            return _logs.GetOrAdd((component.GetType(), componentNameSuffix), (key) =>
-            {
-                var componentName = key.Suffix != null
-                    ? $"{TypeNameHelper.GetTypeDisplayName(key.Type)}[{key.Suffix}]"
-                    : TypeNameHelper.GetTypeDisplayName(key.Type);
+            var componentName = ComponentNameHelper.GetComponentName(component, componentNameSuffix);
 
-                return new DirectConsoleLog(componentName);
-            });
+            return _logs.GetOrAdd(componentName, key => new DirectConsoleLog(key));
         }
 
         public ILog CreateLog<TComponent>(TComponent component)
