@@ -2,6 +2,7 @@
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
+using Lykke.Logs.Loggers.LykkeConsole;
 
 namespace Lykke.Logs
 {
@@ -18,18 +19,26 @@ namespace Lykke.Logs
         [NotNull]
         public static ILogFactory Instance { get; } = new DirectConsoleLogFactory();
 
-        private readonly ConcurrentDictionary<string, DirectConsoleLog> _logs;
+        private readonly ConcurrentDictionary<string, ILog> _logs;
 
         private DirectConsoleLogFactory()
         {
-            _logs = new ConcurrentDictionary<string, DirectConsoleLog>();
+            _logs = new ConcurrentDictionary<string, ILog>();
         }
 
         public ILog CreateLog<TComponent>(TComponent component, string componentNameSuffix)
         {
             var componentName = ComponentNameHelper.GetComponentName(component, componentNameSuffix);
 
-            return _logs.GetOrAdd(componentName, key => new DirectConsoleLog(key));
+            return _logs.GetOrAdd(componentName, key =>
+            {
+                var logger = new LykkeConsoleLogger(
+                    componentName,
+                    ConsoleLogMessageWriter.Instance,
+                    new ConsoleLoggerOptions());
+
+                return new Log(logger, ConsoleHealthNotifier.Instance);
+            });
         }
 
         public ILog CreateLog<TComponent>(TComponent component)
