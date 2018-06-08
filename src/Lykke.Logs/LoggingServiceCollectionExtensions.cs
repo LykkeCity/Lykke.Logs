@@ -2,9 +2,6 @@
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.Log;
-using Lykke.Logs.Loggers.LykkeAzureTable;
-using Lykke.Logs.Loggers.LykkeConsole;
-using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,8 +21,8 @@ namespace Lykke.Logs
         /// <param name="configure">The <see cref="T:Microsoft.Extensions.Logging.ILogBuilder" /> configuration delegate.</param>
         /// <param name="azureTableConnectionString">Connection string reloading manager for Azure Table logger</param>
         /// <param name="azureTableName">Table name for the Azure Table logger</param>
-        /// <param name="slackAzureQueueConnectionString">Connection string for the Slack logger and health notifier</param>
-        /// <param name="slackAzureQueuesBaseName">Base queue name for the Slack logger</param>
+        /// <param name="slackAzureQueueConnectionString">Connection string for the Slack loggers and health notifier</param>
+        /// <param name="slackAzureQueuesBaseName">Base queue name for the Slack loggers</param>
         /// <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> so that additional calls can be chained.</returns>
         [NotNull]
         public static IServiceCollection AddLykkeLogging(

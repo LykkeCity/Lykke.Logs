@@ -81,6 +81,11 @@ namespace Lykke.Logs
 
             configure?.Invoke(options);
 
+            // This will be used by additional Slack channel loggers
+            var generalOptions = new GeneralSlackLoggerOptions(azureQueueConnectionString, azureQueuesBaseName);
+            
+            builder.Services.AddSingleton(generalOptions);
+
             builder.Services.AddSingleton<ILoggerProvider, LykkeSlackLoggerProvider>(s => new LykkeSlackLoggerProvider(
                 azureQueueConnectionString,
                 azureQueuesBaseName,
