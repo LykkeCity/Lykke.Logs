@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using AzureStorage.Tables;
 using JetBrains.Annotations;
-using Lykke.Logs.AzureTablePersistence;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Logging;
 
@@ -13,27 +11,23 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
     {
         private readonly ConcurrentDictionary<string, LykkeAzureTableLogger> _loggers;
 
-        private readonly IAzureTableLogPersistenceQueue<LogEntity> _persistenceQueue;
+        private readonly IAzureTableLogPersistenceQueue _persistenceQueue;
 
         public LykkeAzureTableLoggerProvider(
             [NotNull] IReloadingManager<string> connectionString, 
             [NotNull] string tableName,
-            [CanBeNull] TimeSpan? maxBatchLifetime = null,
-            int batchSizeThreshold = 100)
+            [NotNull] AzureTableLoggerOptions options)
         {
             _loggers = new ConcurrentDictionary<string, LykkeAzureTableLogger>();
             
             var storage = AzureTableStorage<LogEntity>.Create(connectionString, tableName, DirectConsoleLogFactory.Instance);
 
-            _persistenceQueue = new AzureTableLogPersistenceQueue<LogEntity>(
+            _persistenceQueue = new AzureTableLogPersistenceQueue(
                 storage,
-                new LykkeLogToAzureEntityRowKeyGenerator(),
                 "General log",
                 DirectConsoleLogFactory.Instance,
-                maxBatchLifetime,
-                batchSizeThreshold,
-                // 2 is enough since we have yyyy-MM-dd as PK and batch will not be greater than a day for sure.
-                degreeOfPersistenceParallelism: 2);
+                options.MaxBatchLifetime,
+                options.BatchSizeThreshold);
         }
 
         public ILogger CreateLogger(string componentName)

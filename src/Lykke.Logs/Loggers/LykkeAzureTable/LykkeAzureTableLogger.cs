@@ -2,7 +2,6 @@
 using AsyncFriendlyStackTrace;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.Logs.AzureTablePersistence;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions.Internal;
 
@@ -11,11 +10,11 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
     internal sealed class LykkeAzureTableLogger : ILogger
     {
         [NotNull] private readonly string _componentName;
-        [NotNull] private readonly IAzureTableLogPersistenceQueue<LogEntity> _persistenceQueue;
+        [NotNull] private readonly IAzureTableLogPersistenceQueue _persistenceQueue;
 
         public LykkeAzureTableLogger(
             [NotNull] string componentName, 
-            [NotNull] IAzureTableLogPersistenceQueue<LogEntity> persistenceQueue)
+            [NotNull] IAzureTableLogPersistenceQueue persistenceQueue)
         {
             _componentName = componentName ?? throw new ArgumentNullException(nameof(componentName));
             _persistenceQueue = persistenceQueue ?? throw new ArgumentNullException(nameof(persistenceQueue));

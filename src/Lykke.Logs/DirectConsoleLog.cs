@@ -10,13 +10,12 @@ namespace Lykke.Logs
     {
         private readonly ILog _log;
 
-        public DirectConsoleLog(string componentName)
+        public DirectConsoleLog(string componentName, ConsoleLoggerOptions options = null)
         {
             var logger = new LykkeConsoleLogger(
                 componentName, 
-                (s, l) => true, 
-                true,
-                ConsoleLogMessageWriter.Instance);
+                ConsoleLogMessageWriter.Instance,
+                options ?? new ConsoleLoggerOptions());
 
             _log = new Log(logger, ConsoleHealthNotifier.Instance);
         }

@@ -8,13 +8,13 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace ConsoleLoggerRunner
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             Environment.SetEnvironmentVariable("ENV_INFO", "test");
 
-            using (var provider = new LykkeConsoleLoggerProvider((s, level) => true, false, ConsoleLogMessageWriter.Instance))
+            using (var provider = new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), ConsoleLogMessageWriter.Instance))
             {
                 var logger = new ErrorsHandlingLoggerDecorator(provider.CreateLogger("ComponentName"));
 
@@ -46,7 +46,7 @@ namespace ConsoleLoggerRunner
 
 
                 Thread.Sleep(100);
-                using (var scopedProvider = new LykkeConsoleLoggerProvider((s, level) => true, true, ConsoleLogMessageWriter.Instance))
+                using (var scopedProvider = new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), ConsoleLogMessageWriter.Instance))
                 {
                     var scopedLogger = scopedProvider.CreateLogger("ScopedComponent");
                     scopedLogger.Log(LogLevel.Information, new EventId(0), GetState(), null,

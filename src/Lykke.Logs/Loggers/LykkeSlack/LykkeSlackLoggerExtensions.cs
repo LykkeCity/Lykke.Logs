@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Lykke.Logs.Loggers.LykkeSlack
 {
     [PublicAPI]
-    public static class LykkeSlackLoggerExtensions
+    internal static class LykkeSlackLoggerExtensions
     {
         /// <summary>
         /// Adds a Slack logger that logs entries to the essential Lykke Slack channels.
@@ -15,15 +15,15 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         /// <see cref="Microsoft.Extensions.Logging.LogLevel.Critical"/> entries to the sys-warnings
         /// and app-errors channels
         /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="builder">The <see cref="ILogBuilder"/> to use.</param>
         /// <param name="azureQueueConnectionString">Azure Storage connection string</param>
         /// <param name="azureQueuesBaseName">Base name for the Azure Storage queues</param>
         /// <param name="configure">Optional configuration action</param>
-        public static ILoggingBuilder AddLykkeEssentialSlackChannels(
-            [NotNull] this ILoggingBuilder builder,
+        internal static ILogBuilder AddEssentialSlackChannels(
+            [NotNull] this ILogBuilder builder,
             [NotNull] string azureQueueConnectionString,
             [NotNull] string azureQueuesBaseName,
-            [CanBeNull] Action<ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel>> configure = null)
+            [CanBeNull] Action<SlackLoggerOptions> configure = null)
         {
             if (builder == null)
             {
@@ -41,13 +41,15 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 spamGuard.SetMutePeriod(level, TimeSpan.FromMinutes(1));
             }
 
-            configure?.Invoke(spamGuard);
-
             spamGuard.Start();
+
+            var options = new SlackLoggerOptions(spamGuard);
+
+            configure?.Invoke(options);
 
             builder.Services.AddSingleton<ILoggerProvider, LykkeSlackLoggerProvider>(s => new LykkeSlackLoggerProvider(
                 azureQueueConnectionString,
-                azureQueuesBaseName, 
+                azureQueuesBaseName,
                 spamGuard,
                 level =>
                 {
@@ -75,19 +77,17 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         /// <summary>
         /// Adds a Slack logger that logs entries to the additional Slack channel.
         /// </summary>
-        /// <param name="builder">The <see cref="ILoggingBuilder"/> to use.</param>
+        /// <param name="builder">The <see cref="ILogBuilder"/> to use.</param>
         /// <param name="azureQueueConnectionString">Azure Storage connection string</param>
         /// <param name="azureQueuesBaseName">Base name for the Azure Storage queues</param>
         /// <param name="channel">Channel ID</param>
-        /// <param name="minLevel">Minimal logging level</param>
         /// <param name="configure">Optional configuration action</param>
-        public static ILoggingBuilder AddLykkeAdditionalSlackChannel(
-            [NotNull] this ILoggingBuilder builder,
+        public static ILogBuilder AddAdditionalSlackChannel(
+            [NotNull] this ILogBuilder builder,
             [NotNull] string azureQueueConnectionString,
             [NotNull] string azureQueuesBaseName,
             [NotNull] string channel,
-            Microsoft.Extensions.Logging.LogLevel minLevel = Microsoft.Extensions.Logging.LogLevel.Information,
-            [CanBeNull] Action<ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel>> configure = null)
+            [CanBeNull] Action<AdditionalSlackLoggerOptions> configure = null)
         {
             if (builder == null)
             {
@@ -100,7 +100,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
 
             var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(DirectConsoleLogFactory.Instance);
 
-            foreach (var level in new []
+            foreach (var level in new[]
             {
                 Microsoft.Extensions.Logging.LogLevel.Information,
                 Microsoft.Extensions.Logging.LogLevel.Warning,
@@ -110,15 +110,17 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 spamGuard.SetMutePeriod(level, TimeSpan.FromMinutes(1));
             }
 
-            configure?.Invoke(spamGuard);
-
             spamGuard.Start();
+
+            var options = new AdditionalSlackLoggerOptions(spamGuard);
+
+            configure?.Invoke(options);
 
             builder.Services.AddSingleton<ILoggerProvider, LykkeSlackLoggerProvider>(s => new LykkeSlackLoggerProvider(
                 azureQueueConnectionString,
                 azureQueuesBaseName, 
                 spamGuard,
-                level => level >= minLevel ? channel : null));
+                level => level >= options.MinLogLevel ? channel : null));
 
             return builder;
         }

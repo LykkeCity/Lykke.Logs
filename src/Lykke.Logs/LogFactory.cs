@@ -2,7 +2,6 @@
 using Common.Log;
 using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs
 {

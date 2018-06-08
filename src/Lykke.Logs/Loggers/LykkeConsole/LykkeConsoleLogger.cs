@@ -11,15 +11,16 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 {
     internal sealed class LykkeConsoleLogger : ILogger
     {
+        private readonly string _name;
+        private readonly ConsoleLoggerOptions _options;
         private readonly IConsoleLogMessageWriter _writer;
+
         private static readonly string LogLevelPadding = ": ";
         private static readonly string MessagePadding;
         private static readonly string NewLineWithMessagePadding;
         
         // ConsoleColor does not have a value to specify the 'Default' color
         private readonly ConsoleColor? _defaultConsoleColor = null;
-
-        private Func<string, Microsoft.Extensions.Logging.LogLevel, bool> _filter;
 
         [ThreadStatic]
         private static StringBuilder _logBuilder;
@@ -33,26 +34,13 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
         public LykkeConsoleLogger(
             [NotNull] string name,
-            [CanBeNull] Func<string, Microsoft.Extensions.Logging.LogLevel, bool> filter,
-            bool includeScopes,
-            [NotNull] IConsoleLogMessageWriter writer)
+            [NotNull] IConsoleLogMessageWriter writer,
+            [NotNull] ConsoleLoggerOptions options)
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-            Filter = filter ?? ((category, logLevel) => true);
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-
-            IncludeScopes = includeScopes;
         }
-
-        public Func<string, Microsoft.Extensions.Logging.LogLevel, bool> Filter
-        {
-            get => _filter;
-            set => _filter = value ?? throw new ArgumentNullException(nameof(value));
-        }
-
-        public bool IncludeScopes { get; set; }
-
-        public string Name { get; }
 
         public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
@@ -72,7 +60,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
             if (!string.IsNullOrEmpty(message) || exception != null)
             {
-                WriteMessage(logLevel, callerInfo, Name, message, exception);
+                WriteMessage(logLevel, callerInfo, _name, message, exception);
             }
         }
         
@@ -98,7 +86,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
 
             // scope information
-            if (IncludeScopes)
+            if (_options.IncludeScopes)
             {
                 GetScopeInformation(logBuilder);
             }
@@ -154,7 +142,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
         {
-            return Filter(Name, logLevel);
+            return true;
         }
 
         public IDisposable BeginScope<TState>(TState state)
@@ -164,7 +152,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
                 throw new ArgumentNullException(nameof(state));
             }
 
-            return ConsoleLogScope.Push(Name, state);
+            return ConsoleLogScope.Push(_name, state);
         }
 
         private static string GetLogLevelString(Microsoft.Extensions.Logging.LogLevel logLevel)
@@ -219,15 +207,9 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
             while (current != null)
             {
-                string scopeLog;
-                if (length == builder.Length)
-                {
-                    scopeLog = $"=> {current}";
-                }
-                else
-                {
-                    scopeLog = $"=> {current} ";
-                }
+                var scopeLog = length == builder.Length
+                    ? $"=> {current}"
+                    : $"=> {current} ";
 
                 builder.Insert(length, scopeLog);
                 current = current.Parent;

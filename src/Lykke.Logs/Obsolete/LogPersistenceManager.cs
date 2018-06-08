@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using AzureStorage;
 using Common;
 using Common.Log;
-using Lykke.Logs.AzureTablePersistence;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Lykke.Logs

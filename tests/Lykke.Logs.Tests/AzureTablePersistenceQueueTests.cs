@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AzureStorage;
-using Lykke.Logs.AzureTablePersistence;
+using Lykke.Logs.Loggers.LykkeAzureTable;
 using NSubstitute;
 using Xunit;
 
@@ -17,14 +17,13 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_not_triggered_if_there_are_no_entries()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
 
-            using (new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromMilliseconds(100),
-                batchSizeThreshold: 1))
+                batchSizeThreshold: 1,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 // Lets batch life time to be elxpired
 
@@ -40,14 +39,13 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_not_triggered_if_no_entries_amount_nor_batch_lifetime_are_expired()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
 
-            using (var queue = new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (var queue = new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
-                batchSizeThreshold: 100))
+                batchSizeThreshold: 100,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 for (var i = 0; i < 90; ++i)
                 {
@@ -68,14 +66,13 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_triggered_by_entries_amount()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
 
-            using (var queue = new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (var queue = new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
-                batchSizeThreshold: 100))
+                batchSizeThreshold: 100,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 for (var i = 0; i < 100; ++i)
                 {
@@ -96,23 +93,25 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_triggered_by_time_expiration()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
 
-            rowKeyGenerator.Generate(Arg.Any<Loggers.LykkeAzureTable.LogEntity>(), Arg.Any<int>(), Arg.Any<int>()).Returns(callInfo =>
+            storage.InsertAsync(Arg.Any<IEnumerable<Loggers.LykkeAzureTable.LogEntity>>()).Returns(callInfo =>
             {
-                var logEntity = callInfo.Arg<Loggers.LykkeAzureTable.LogEntity>();
+                var logEntities = callInfo.Arg<IEnumerable<Loggers.LykkeAzureTable.LogEntity>>();
 
-                Assert.InRange(DateTimeOffset.UtcNow - logEntity.DateTime, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(1300));
-
-                return string.Empty;
+                foreach (var entity in logEntities)
+                {
+                    Assert.InRange(DateTimeOffset.UtcNow - entity.DateTime, TimeSpan.FromSeconds(1), TimeSpan.FromMilliseconds(1300));
+                }
+                
+                return Task.CompletedTask;
             });
 
-            using (var queue = new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (var queue = new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromSeconds(1),
-                batchSizeThreshold: 100))
+                batchSizeThreshold: 100,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 queue.Enqueue(new Loggers.LykkeAzureTable.LogEntity
                 {
@@ -133,7 +132,6 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_triggered_by_entries_amount_extends_batch_lifetime()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
             var batchTimes = new List<DateTime>();
             var batchCounts = new List<int>();
 
@@ -145,12 +143,12 @@ namespace Lykke.Logs.Tests
                 return Task.CompletedTask;
             });
 
-            using (var queue = new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (var queue = new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromSeconds(1),
-                batchSizeThreshold: 10))
+                batchSizeThreshold: 10,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 for (var i = 0; i < 9; ++i)
                 {
@@ -188,14 +186,13 @@ namespace Lykke.Logs.Tests
         public async Task Batch_persistence_is_triggered_by_disposing()
         {
             var storage = Substitute.For<INoSQLTableStorage<Loggers.LykkeAzureTable.LogEntity>>();
-            var rowKeyGenerator = Substitute.For<ILogEntityRowKeyGenerator<Loggers.LykkeAzureTable.LogEntity>>();
 
-            using (var queue = new AzureTableLogPersistenceQueue<Loggers.LykkeAzureTable.LogEntity>(
+            using (var queue = new AzureTableLogPersistenceQueue(
                 storage,
-                rowKeyGenerator,
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
-                batchSizeThreshold: 10))
+                batchSizeThreshold: 10,
+                lastResortLogFactory: DirectConsoleLogFactory.Instance))
             {
                 queue.Enqueue(new Loggers.LykkeAzureTable.LogEntity());
             }

@@ -2,9 +2,12 @@
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.Log;
+using Lykke.Logs.Loggers.LykkeAzureTable;
+using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSlack;
+using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
@@ -18,18 +21,24 @@ namespace Lykke.Logs
         /// Adds Lykke logging services to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
         /// </summary>
         /// <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
-        /// <param name="configure">The <see cref="T:Microsoft.Extensions.Logging.ILoggingBuilder" /> configuration delegate.</param>
+        /// <param name="configure">The <see cref="T:Microsoft.Extensions.Logging.ILogBuilder" /> configuration delegate.</param>
+        /// <param name="azureTableConnectionString">Connection string reloading manager for Azure Table logger</param>
+        /// <param name="azureTableName">Table name for the Azure Table logger</param>
+        /// <param name="slackAzureQueueConnectionString">Connection string for the Slack logger and health notifier</param>
+        /// <param name="slackAzureQueuesBaseName">Base queue name for the Slack logger</param>
         /// <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> so that additional calls can be chained.</returns>
         [NotNull]
-        public static IServiceCollection AddLykkeLogging([NotNull] this IServiceCollection services, [NotNull] Action<ILoggingBuilder> configure)
+        public static IServiceCollection AddLykkeLogging(
+            [NotNull] this IServiceCollection services,
+            [NotNull] IReloadingManager<string> azureTableConnectionString,
+            [NotNull] string azureTableName,
+            [NotNull] string slackAzureQueueConnectionString,
+            [NotNull] string slackAzureQueuesBaseName,
+            [CanBeNull] Action<ILogBuilder> configure = null)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
-            }
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
             }
             if (AppEnvironment.EnvInfo == null)
             {
@@ -44,15 +53,31 @@ namespace Lykke.Logs
                 throw new InvalidOperationException("Application version should be not empty");
             }
 
+            services.AddSingleton<IHealthNotifier, HealthNotifier>(s => new HealthNotifier(
+                AppEnvironment.Name,
+                AppEnvironment.Version,
+                AppEnvironment.EnvInfo,
+                s.GetRequiredService<ILogFactory>(),
+                slackAzureQueueConnectionString,
+                slackAzureQueuesBaseName));
+
             services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogFactory), typeof(LogFactory)));
+            services.AddLogging();
 
-            return services.AddLogging(buidler =>
-            {
-                buidler.AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning);
-                buidler.AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning);
+            var builder = new LogBuilder(services);
 
-                configure(buidler);
-            });
+            builder
+                .AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning)
+                .AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning);
+
+            configure?.Invoke(builder);
+
+            builder
+                .AddConsole(builder.ConfigureConsole)
+                .AddAzureTable(azureTableConnectionString, azureTableName, builder.ConfigureAzureTable)
+                .AddEssentialSlackChannels(slackAzureQueueConnectionString, slackAzureQueuesBaseName, builder.ConfigureEssentialSlackChannels);
+
+            return services;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Lykke.Logs.Tests
         {
             _console = Substitute.For<IConsole>();
             
-            _provider = new LykkeConsoleLoggerProvider((s, level) => true, false, new ConsoleLogMessageWriter(_console));
+            _provider = new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), new ConsoleLogMessageWriter(_console));
 
             _logger = _provider.CreateLogger("MyLogger");
         }
@@ -42,17 +42,12 @@ namespace Lykke.Logs.Tests
         [Fact]
         public void ProviderShouldReturnCorrectLogger()
         {
-            using (var provider = new LykkeConsoleLoggerProvider(Filter, false, Substitute.For<IConsoleLogMessageWriter>()))
+            using (var provider = new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), Substitute.For<IConsoleLogMessageWriter>()))
             {
                 var logger = provider.CreateLogger("SupperLogger");
 
                 Assert.IsType<LykkeConsoleLogger>(logger);
             }
-        }
-
-        private static bool Filter(string arg1, Microsoft.Extensions.Logging.LogLevel arg2)
-        {
-            return true;
         }
 
         public void Dispose()

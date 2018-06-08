@@ -1,5 +1,4 @@
 using System;
-using Lykke.Logs.AzureTablePersistence;
 
 namespace Lykke.Logs
 {
