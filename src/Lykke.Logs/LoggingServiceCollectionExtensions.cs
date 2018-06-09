@@ -50,11 +50,14 @@ namespace Lykke.Logs
                 throw new InvalidOperationException("Application version should be not empty");
             }
 
-            services.AddSingleton<IHealthNotifier, HealthNotifier>(s => new HealthNotifier(
-                s.GetRequiredService<ILogFactory>(),
-                new HealthNotifierSlackSenderFactory(s.GetRequiredService<ILogFactory>()), 
-                slackAzureQueueConnectionString,
-                slackAzureQueuesBaseName));
+            services.AddSingleton<IHealthNotifier, HealthNotifier>(s =>
+            {
+                var slackSenderFactory = new HealthNotifierSlackSenderFactory(s.GetRequiredService<ILogFactory>());
+
+                return new HealthNotifier(
+                    s.GetRequiredService<ILogFactory>(),
+                    slackSenderFactory.Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName));
+            });
 
             services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogFactory), typeof(LogFactory)));
             services.AddLogging();

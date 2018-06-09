@@ -23,23 +23,17 @@ namespace Lykke.Logs
         /// Creates lykke health notifier for the specific app
         /// </summary>
         /// <param name="logFactory">Log factory</param>
-        /// <param name="slackSenderFactory">Slack sender factory</param>
-        /// <param name="azureQueueConnectionString">Azure Storage connection string</param>
-        /// <param name="azureQueuesBaseName">Base name for the Azure Storage queues</param>
+        /// <param name="slackSender">Slack sender factory</param>
         internal HealthNotifier(
             [NotNull] ILogFactory logFactory,
-            [NotNull] IHealthNotifierSlackSenderFactory slackSenderFactory,
-            [NotNull] string azureQueueConnectionString,
-            [NotNull] string azureQueuesBaseName)
+            [NotNull] ISlackNotificationsSender slackSender)
 
             : this(
                   AppEnvironment.Name, 
                   AppEnvironment.Version, 
                   AppEnvironment.EnvInfo, 
                   logFactory, 
-                  slackSenderFactory,
-                  azureQueueConnectionString,
-                  azureQueuesBaseName)
+                  slackSender)
         {
         }
 
@@ -50,34 +44,19 @@ namespace Lykke.Logs
         /// <param name="appVersion">Version of the app</param>
         /// <param name="envInfo">ENV_INFO environment variable of the app</param>
         /// <param name="logFactory">Log factory</param>
-        /// <param name="slackSenderFactory">Slack sender factory</param>
-        /// <param name="azureQueueConnectionString">Azure Storage connection string</param>
-        /// <param name="azureQueuesBaseName">Base name for the Azure Storage queues</param>
+        /// <param name="slackSender">Slack sender</param>
         public HealthNotifier(
             [NotNull] string appName, 
             [NotNull] string appVersion, 
             [NotNull] string envInfo,
             [NotNull] ILogFactory logFactory, 
-            [NotNull] IHealthNotifierSlackSenderFactory slackSenderFactory,
-            [NotNull] string azureQueueConnectionString,
-            [NotNull] string azureQueuesBaseName)
+            [NotNull] ISlackNotificationsSender slackSender)
         {
             _appName = appName ?? throw new ArgumentNullException(nameof(appName));
             _appVersion = appVersion ?? throw new ArgumentNullException(nameof(appVersion));
             _envInfo = envInfo ?? throw new ArgumentNullException(nameof(envInfo));
             _logFactory = logFactory ?? throw new ArgumentNullException(nameof(logFactory));
-
-            if (slackSenderFactory == null)
-            {
-                throw new ArgumentNullException(nameof(slackSenderFactory));
-            }
-
-            _slackSender = slackSenderFactory.Create(azureQueueConnectionString, azureQueuesBaseName);
-
-            if (_slackSender == null)
-            {
-                throw new InvalidOperationException("Slack sender factory created no Slack sender");
-            }
+            _slackSender = slackSender ?? throw new ArgumentNullException(nameof(slackSender));
         }
 
         /// <inheritdoc />
