@@ -51,10 +51,8 @@ namespace Lykke.Logs
             }
 
             services.AddSingleton<IHealthNotifier, HealthNotifier>(s => new HealthNotifier(
-                AppEnvironment.Name,
-                AppEnvironment.Version,
-                AppEnvironment.EnvInfo,
                 s.GetRequiredService<ILogFactory>(),
+                new HealthNotifierSlackSenderFactory(s.GetRequiredService<ILogFactory>()), 
                 slackAzureQueueConnectionString,
                 slackAzureQueuesBaseName));
 
