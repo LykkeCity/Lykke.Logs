@@ -63,6 +63,14 @@ namespace Lykke.Logs
             {
                 throw new ArgumentNullException(nameof(builder));
             }
+            if (string.IsNullOrWhiteSpace(azureQueueConnectionString))
+            {
+                throw new ArgumentNullException(nameof(azureQueueConnectionString));
+            }
+            if (string.IsNullOrWhiteSpace(azureQueuesBaseName))
+            {
+                throw new ArgumentNullException();
+            }
 
             var spamGuard = new SpamGuard<Microsoft.Extensions.Logging.LogLevel>(DirectConsoleLogFactory.Instance);
 

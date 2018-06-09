@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using JetBrains.Annotations;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -86,7 +87,12 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
 
             if (str.Length > maxLength)
             {
-                return string.Concat(str.Substring(0, maxLength), "...");
+                var builder = new StringBuilder();
+
+                builder.Append(str, 0, maxLength);
+                builder.Append("...");
+
+                return builder.ToString();
             }
 
             return str;
