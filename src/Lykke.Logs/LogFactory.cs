@@ -13,7 +13,7 @@ namespace Lykke.Logs
     [PublicAPI]
     public sealed class LogFactory : ILogFactory
     {
-        internal static ILogFactory LastResort { get; } = new LogFactory().AddUnbufferedConsole();
+        internal static ILogFactory LastResort { get; } = Create().AddUnbufferedConsole();
 
         private readonly ILoggerFactory _loggerFactory;
         private readonly Lazy<IHealthNotifier> _healthNotifierProvider;
