@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.Log;
@@ -13,11 +14,15 @@ namespace Lykke.Logs
     [PublicAPI]
     public sealed class HealthNotifier : IHealthNotifier
     {
+        private ILog Log => _log ?? (_log = _logFactory.CreateLog(this));
+
         [NotNull] private readonly ILogFactory _logFactory;
         [NotNull] private readonly string _appName;
         [NotNull] private readonly string _appVersion;
         [NotNull] private readonly string _envInfo;
         [NotNull] private readonly ISlackNotificationsSender _slackSender;
+
+        private ILog _log;
 
         /// <summary>
         /// Creates lykke health notifier for the specific app
@@ -77,7 +82,7 @@ namespace Lykke.Logs
             // TODO: Actually there is no IO, so ISlackNotificationsSender should be refactored to be synchronous
             _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender).ConfigureAwait(false).GetAwaiter().GetResult();
 
-            _logFactory.CreateLog(this).Info(healthMessage, context);
+            Log.Info(healthMessage, context);
         }
 
         public void Dispose()

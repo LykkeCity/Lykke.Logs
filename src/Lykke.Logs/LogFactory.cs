@@ -24,13 +24,11 @@ namespace Lykke.Logs
             _healthNotifierProvider = healthNotifierProvider ?? throw new ArgumentNullException(nameof(healthNotifierProvider));
         }
 
-        /// <summary>
-        /// Creates the log factory
-        /// </summary>
-        public LogFactory()
+        public static ILogFactory Create()
         {
-            _loggerFactory = new LoggerFactory();
-            _healthNotifierProvider = new Lazy<IHealthNotifier>(() => NotSupportedHealthNotifier.Instance);
+            return new LogFactory(
+                new LoggerFactory(),
+                new Lazy<IHealthNotifier>(() => NotSupportedHealthNotifier.Instance));
         }
 
         /// <inheritdoc />
