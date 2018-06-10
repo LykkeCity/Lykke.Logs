@@ -16,9 +16,9 @@ namespace Lykke.Logs
         internal static ILogFactory LastResort { get; } = Create().AddUnbufferedConsole();
 
         private readonly ILoggerFactory _loggerFactory;
-        private readonly Lazy<IHealthNotifier> _healthNotifierProvider;
+        private readonly Func<IHealthNotifier> _healthNotifierProvider;
 
-        internal LogFactory(ILoggerFactory loggerFactory, Lazy<IHealthNotifier> healthNotifierProvider)
+        internal LogFactory(ILoggerFactory loggerFactory, Func<IHealthNotifier> healthNotifierProvider)
         {
             _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             _healthNotifierProvider = healthNotifierProvider ?? throw new ArgumentNullException(nameof(healthNotifierProvider));
@@ -28,7 +28,7 @@ namespace Lykke.Logs
         {
             return new LogFactory(
                 new LoggerFactory(),
-                new Lazy<IHealthNotifier>(() => NotSupportedHealthNotifier.Instance));
+                () => NotSupportedHealthNotifier.Instance);
         }
 
         /// <inheritdoc />
@@ -43,7 +43,7 @@ namespace Lykke.Logs
                 throw new ArgumentException("Should be not empty string", nameof(componentNameSuffix));
             }
 
-            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Value);
+            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Invoke());
         }
 
         /// <inheritdoc />
@@ -54,7 +54,7 @@ namespace Lykke.Logs
                 throw new ArgumentNullException(nameof(component));
             }
 
-            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Value);
+            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Invoke());
         }
 
         /// <inheritdoc />
