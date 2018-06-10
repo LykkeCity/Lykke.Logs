@@ -63,9 +63,7 @@ namespace Lykke.Logs
                     slackSenderFactory.Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName));
             });
 
-            services.AddSingleton<ILogFactory, LogFactory>(s => new LogFactory(
-                s.GetRequiredService<ILoggerFactory>(),
-                s.GetRequiredService<Lazy<IHealthNotifier>>()));
+            services.AddSingleton<ILogFactory, LogFactory>();
             services.AddLogging();
 
             var builder = new LogBuilder(services);
