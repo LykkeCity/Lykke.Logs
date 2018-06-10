@@ -8,6 +8,7 @@ using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
@@ -62,7 +63,9 @@ namespace Lykke.Logs
                     slackSenderFactory.Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName));
             });
 
-            services.TryAdd(ServiceDescriptor.Singleton(typeof(ILogFactory), typeof(LogFactory)));
+            services.AddSingleton<ILogFactory, LogFactory>(s => new LogFactory(
+                s.GetRequiredService<ILoggerFactory>(),
+                s.GetRequiredService<Lazy<IHealthNotifier>>()));
             services.AddLogging();
 
             var builder = new LogBuilder(services);
