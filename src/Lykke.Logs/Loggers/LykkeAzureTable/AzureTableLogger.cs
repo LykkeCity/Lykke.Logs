@@ -7,12 +7,12 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeAzureTable
 {
-    internal sealed class LykkeAzureTableLogger : ILogger
+    internal sealed class AzureTableLogger : ILogger
     {
         [NotNull] private readonly string _componentName;
         [NotNull] private readonly IAzureTableLogPersistenceQueue _persistenceQueue;
 
-        public LykkeAzureTableLogger(
+        public AzureTableLogger(
             [NotNull] string componentName, 
             [NotNull] IAzureTableLogPersistenceQueue persistenceQueue)
         {

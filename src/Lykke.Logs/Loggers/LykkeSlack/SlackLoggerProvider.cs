@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace Lykke.Logs.Loggers.LykkeSlack
 {
     [ProviderAlias("Slack")]
-    internal sealed class LykkeSlackLoggerProvider : ILoggerProvider
+    internal sealed class SlackLoggerProvider : ILoggerProvider
     {
         [NotNull] private readonly ISpamGuard<Microsoft.Extensions.Logging.LogLevel> _spamGuard;
         [NotNull] private readonly Func<Microsoft.Extensions.Logging.LogLevel, string> _channelResolver;
@@ -14,7 +14,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         [NotNull] private readonly ConcurrentDictionary<string, ILogger> _loggers;
         [NotNull] private readonly ISlackLogEntriesSender _sender;
 
-        public LykkeSlackLoggerProvider(
+        public SlackLoggerProvider(
             [NotNull] string azureQueueConnectionString,
             [NotNull] string azureQueuesBaseName,
             [NotNull] ISpamGuard<Microsoft.Extensions.Logging.LogLevel> spamGuard,
@@ -36,7 +36,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         {
             return new SpamGuardingLoggerDecorator(
                 componentName,
-                new LykkeSlackLogger(_sender, componentName, _channelResolver),
+                new SlackLogger(_sender, componentName, _channelResolver),
                 _spamGuard);
         }
 

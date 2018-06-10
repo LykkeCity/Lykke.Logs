@@ -29,7 +29,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             foreach (var level in LogLevels.All)
             {
                 var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
-                        DirectConsoleLogFactory.Instance,
+                        LogFactory.LastResort,
                         serializer,
                         $"Slack log [{level}]",
                         new AzureQueueSettings

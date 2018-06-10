@@ -11,7 +11,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 {
     internal sealed class LykkeConsoleLogger : ILogger
     {
-        private readonly string _name;
+        private readonly string _componentName;
         private readonly ConsoleLoggerOptions _options;
         private readonly IConsoleLogMessageWriter _writer;
 
@@ -33,11 +33,11 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         }
 
         public LykkeConsoleLogger(
-            [NotNull] string name,
+            [NotNull] string componentName,
             [NotNull] IConsoleLogMessageWriter writer,
             [NotNull] ConsoleLoggerOptions options)
         {
-            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _componentName = componentName ?? throw new ArgumentNullException(nameof(componentName));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         }
@@ -60,7 +60,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
             if (!string.IsNullOrEmpty(message) || exception != null)
             {
-                WriteMessage(logLevel, callerInfo, _name, message, exception);
+                WriteMessage(logLevel, callerInfo, _componentName, message, exception);
             }
         }
         
@@ -152,7 +152,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
                 throw new ArgumentNullException(nameof(state));
             }
 
-            return ConsoleLogScope.Push(_name, state);
+            return ConsoleLogScope.Push(_componentName, state);
         }
 
         private static string GetLogLevelString(Microsoft.Extensions.Logging.LogLevel logLevel)

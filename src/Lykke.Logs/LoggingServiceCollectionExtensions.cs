@@ -2,6 +2,9 @@
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.Log;
+using Lykke.Logs.Loggers.LykkeAzureTable;
+using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

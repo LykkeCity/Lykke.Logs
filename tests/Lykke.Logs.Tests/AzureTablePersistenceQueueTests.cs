@@ -23,7 +23,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromMilliseconds(100),
                 batchSizeThreshold: 1,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 // Lets batch life time to be elxpired
 
@@ -45,7 +45,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
                 batchSizeThreshold: 100,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 for (var i = 0; i < 90; ++i)
                 {
@@ -72,7 +72,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
                 batchSizeThreshold: 100,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 for (var i = 0; i < 100; ++i)
                 {
@@ -111,7 +111,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromSeconds(1),
                 batchSizeThreshold: 100,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 queue.Enqueue(new Loggers.LykkeAzureTable.LogEntity
                 {
@@ -148,7 +148,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromSeconds(1),
                 batchSizeThreshold: 10,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 for (var i = 0; i < 9; ++i)
                 {
@@ -192,7 +192,7 @@ namespace Lykke.Logs.Tests
                 "test log",
                 maxBatchLifetime: TimeSpan.FromHours(1),
                 batchSizeThreshold: 10,
-                lastResortLogFactory: DirectConsoleLogFactory.Instance))
+                lastResortLogFactory: EmptyLogFactory.Instance))
             {
                 queue.Enqueue(new Loggers.LykkeAzureTable.LogEntity());
             }

@@ -1,21 +1,39 @@
 ﻿using System;
 using Common.Log;
+using JetBrains.Annotations;
 using Lykke.Common.Log;
+using Lykke.Logs.Loggers.LykkeConsole;
 using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
-    internal sealed class LogFactory : ILogFactory
+    /// <summary>
+    /// Log factory
+    /// </summary>
+    [PublicAPI]
+    public sealed class LogFactory : ILogFactory
     {
+        internal static ILogFactory LastResort { get; } = new LogFactory().AddUnbufferedConsole();
+
         private readonly ILoggerFactory _loggerFactory;
         private readonly Lazy<IHealthNotifier> _healthNotifierProvider;
 
-        public LogFactory(ILoggerFactory loggerFactory, Lazy<IHealthNotifier> healthNotifierProvider)
+        internal LogFactory(ILoggerFactory loggerFactory, Lazy<IHealthNotifier> healthNotifierProvider)
         {
-            _loggerFactory = loggerFactory;
-            _healthNotifierProvider = healthNotifierProvider;
+            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _healthNotifierProvider = healthNotifierProvider ?? throw new ArgumentNullException(nameof(healthNotifierProvider));
         }
 
+        /// <summary>
+        /// Creates the log factory
+        /// </summary>
+        public LogFactory()
+        {
+            _loggerFactory = new LoggerFactory();
+            _healthNotifierProvider = new Lazy<IHealthNotifier>(() => NotSupportedHealthNotifier.Instance);
+        }
+
+        /// <inheritdoc />
         public ILog CreateLog<TComponent>(TComponent component, string componentNameSuffix)
         {
             if (component == null)
@@ -30,6 +48,7 @@ namespace Lykke.Logs
             return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Value);
         }
 
+        /// <inheritdoc />
         public ILog CreateLog<TComponent>(TComponent component)
         {
             if (component == null)
@@ -38,6 +57,22 @@ namespace Lykke.Logs
             }
 
             return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Value);
+        }
+
+        /// <inheritdoc />
+        public void AddProvider(ILoggerProvider provider)
+        {
+            if (provider == null)
+            {
+                throw new ArgumentNullException(nameof(provider));
+            }
+
+            _loggerFactory.AddProvider(provider);
+        }
+
+        public void Dispose()
+        {
+            _loggerFactory.Dispose();
         }
     }
 }

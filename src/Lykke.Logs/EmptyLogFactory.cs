@@ -1,6 +1,7 @@
 ﻿using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Logs
 {
@@ -30,6 +31,14 @@ namespace Lykke.Logs
         public ILog CreateLog<TComponent>(TComponent component)
         {
             return EmptyLog.Instance;
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

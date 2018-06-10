@@ -8,13 +8,13 @@ using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeSlack
 {
-    internal sealed class LykkeSlackLogger : ILogger
+    internal sealed class SlackLogger : ILogger
     {
         private readonly string _componentName;
         private readonly Func<Microsoft.Extensions.Logging.LogLevel, string> _channelResolver;
         private readonly ISlackLogEntriesSender _sender;
 
-        public LykkeSlackLogger(
+        public SlackLogger(
             [NotNull] ISlackLogEntriesSender sender,
             [NotNull] string componentName,
             [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver)

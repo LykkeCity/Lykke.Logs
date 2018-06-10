@@ -16,16 +16,11 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
         public LykkeConsoleLoggerProvider(
             [NotNull] ConsoleLoggerOptions options,
-            [NotNull] IConsoleLogMessageWriter writer)
+            [NotNull] IConsoleLogMessageWriter messageWriter)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
-
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _messageWriter = messageWriter ?? throw new ArgumentNullException(nameof(messageWriter));
 
-            _messageWriter = new BufferedConsoleLogMessageWriterDecorator(writer);
             _loggers = new ConcurrentDictionary<string, LykkeConsoleLogger>();
         }
 

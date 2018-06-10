@@ -7,7 +7,7 @@ namespace Lykke.Logs
     /// Health notifier, that notifies nobody. Could be used in tests
     /// </summary>
     [PublicAPI]
-    public class EmptyHealthNotifier : IHealthNotifier
+    public sealed class EmptyHealthNotifier : IHealthNotifier
     {
         public static IHealthNotifier Instance { get; } = new EmptyHealthNotifier();
 

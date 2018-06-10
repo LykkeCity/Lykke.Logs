@@ -7,25 +7,25 @@ using Microsoft.Extensions.Logging;
 namespace Lykke.Logs.Loggers.LykkeAzureTable
 {
     [ProviderAlias("AzureTable")]
-    internal sealed class LykkeAzureTableLoggerProvider : ILoggerProvider
+    internal sealed class AzureTableLoggerProvider : ILoggerProvider
     {
-        private readonly ConcurrentDictionary<string, LykkeAzureTableLogger> _loggers;
+        private readonly ConcurrentDictionary<string, AzureTableLogger> _loggers;
 
         private readonly IAzureTableLogPersistenceQueue _persistenceQueue;
 
-        public LykkeAzureTableLoggerProvider(
+        public AzureTableLoggerProvider(
             [NotNull] IReloadingManager<string> connectionString, 
             [NotNull] string tableName,
             [NotNull] AzureTableLoggerOptions options)
         {
-            _loggers = new ConcurrentDictionary<string, LykkeAzureTableLogger>();
+            _loggers = new ConcurrentDictionary<string, AzureTableLogger>();
             
-            var storage = AzureTableStorage<LogEntity>.Create(connectionString, tableName, DirectConsoleLogFactory.Instance);
+            var storage = AzureTableStorage<LogEntity>.Create(connectionString, tableName, LogFactory.LastResort);
 
             _persistenceQueue = new AzureTableLogPersistenceQueue(
                 storage,
                 "General log",
-                DirectConsoleLogFactory.Instance,
+                LogFactory.LastResort,
                 options.MaxBatchLifetime,
                 options.BatchSizeThreshold);
         }
@@ -35,9 +35,9 @@ namespace Lykke.Logs.Loggers.LykkeAzureTable
             return _loggers.GetOrAdd(componentName, CreateLoggerImplementation);
         }
 
-        private LykkeAzureTableLogger CreateLoggerImplementation(string componentName)
+        private AzureTableLogger CreateLoggerImplementation(string componentName)
         {
-            return new LykkeAzureTableLogger(componentName, _persistenceQueue);
+            return new AzureTableLogger(componentName, _persistenceQueue);
         }
 
         public void Dispose()
