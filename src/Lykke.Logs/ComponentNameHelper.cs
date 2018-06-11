@@ -18,7 +18,7 @@ namespace Lykke.Logs
                 return GetBaseComponentName(component);
             }
 
-            return $"{GetComponentName(component)}[{suffix}]";
+            return $"{GetBaseComponentName(component)}[{suffix}]";
         }
 
         private static string GetBaseComponentName(object component)
