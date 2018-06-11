@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using Lykke.AzureQueueIntegration;
 using Lykke.AzureQueueIntegration.Publisher;
-using Lykke.Common.Log;
 using Lykke.SlackNotification.AzureQueue;
 using Lykke.SlackNotifications;
 
@@ -12,17 +11,6 @@ namespace Lykke.Logs
     [PublicAPI]
     public sealed class HealthNotifierSlackSenderFactory : IHealthNotifierSlackSenderFactory
     {
-        [NotNull] private readonly ILogFactory _logFactory;
-
-        /// <summary>
-        /// Creates <see cref="HealthNotifierSlackSenderFactory"/>
-        /// </summary>
-        /// <param name="logFactory">Log factory</param>
-        public HealthNotifierSlackSenderFactory([NotNull] ILogFactory logFactory)
-        {
-            _logFactory = logFactory;
-        }
-
         /// <inheritdoc />
         public ISlackNotificationsSender Create(string azureQueueConnectionString, string azureQueuesBaseName)
         {
@@ -36,7 +24,7 @@ namespace Lykke.Logs
             }
 
             var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
-                    _logFactory,
+                    LogFactory.LastResort,
                     new SlackNotificationsSerializer(),
                     "Health notifier",
                     new AzureQueueSettings

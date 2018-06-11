@@ -1,5 +1,10 @@
 ﻿using System;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Lykke.Common.Log;
 using Lykke.SlackNotifications;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
