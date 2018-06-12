@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
+using System.Threading;
 using AsyncFriendlyStackTrace;
 using Microsoft.Extensions.Logging.Console.Internal;
 
@@ -14,7 +14,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
         private readonly bool _disposeInner;
 
         private readonly BlockingCollection<LogMessageEntry> _messageQueue;
-        private readonly Task _outputTask;
+        private readonly Thread _outputThread;
         
         public BufferedConsoleLogMessageWriterDecorator(IConsoleLogMessageWriter inner, bool disposeInner = true)
         {
@@ -22,7 +22,13 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             _disposeInner = disposeInner;
 
             _messageQueue = new BlockingCollection<LogMessageEntry>(MaxQueuedMessages);
-            _outputTask = Task.Factory.StartNew(ProcessLogQueue, this, TaskCreationOptions.LongRunning);
+            
+            _outputThread = new Thread(ProcessLogQueue)
+            {
+                IsBackground = true,
+                Name = "Console logger queue processing thread"
+            };
+            _outputThread.Start();
         }
 
         public void Write(LogMessageEntry entry)
@@ -31,7 +37,7 @@ namespace Lykke.Logs.Loggers.LykkeConsole
             {
                 try
                 {
-                    _inner.Write(entry);
+                    _messageQueue.Add(entry);
                     return;
                 }
                 catch (InvalidOperationException)
@@ -44,25 +50,39 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
         private void ProcessLogQueue()
         {
-            do
+            try
             {
+                do
+                {
+                    try
+                    {
+                        foreach (var entry in _messageQueue.GetConsumingEnumerable())
+                        {
+                            _inner.Write(entry);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToAsyncString());
+
+                        _messageQueue.CompleteAdding();
+                    }
+                } while (!_messageQueue.IsAddingCompleted && _messageQueue.Count == 0);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToAsyncString());
+
                 try
                 {
-                    foreach (var entry in _messageQueue.GetConsumingEnumerable())
-                    {
-                        _inner.Write(entry);
-                    }
+                    _messageQueue.CompleteAdding();
                 }
-                catch (Exception ex)
+                catch(Exception ex1)
                 {
-                    Console.WriteLine(ex.ToAsyncString());
+                    Console.WriteLine(ex1.ToAsyncString());
                 }
-            } while (!_messageQueue.IsAddingCompleted && _messageQueue.Count == 0);
-        }
+            }
 
-        private static void ProcessLogQueue(object state)
-        {
-            ((BufferedConsoleLogMessageWriterDecorator) state).ProcessLogQueue();
         }
 
         public void Dispose()
@@ -71,12 +91,9 @@ namespace Lykke.Logs.Loggers.LykkeConsole
 
             try
             {
-                _outputTask.Wait(TimeSpan.FromSeconds(6));
+                _outputThread.Join(TimeSpan.FromSeconds(6));
             }
-            catch (TaskCanceledException)
-            {
-            }
-            catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException)
+            catch (ThreadStateException)
             {
             }
 
