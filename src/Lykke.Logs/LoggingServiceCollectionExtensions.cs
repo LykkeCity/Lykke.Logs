@@ -65,7 +65,9 @@ namespace Lykke.Logs
 
             services.AddSingleton<Func<IHealthNotifier>>(s => s.GetRequiredService<IHealthNotifier>);
 
-            services.AddSingleton<ILogFactory, LogFactory>();
+            services.AddSingleton<ILogFactory, LogFactory>(s => new LogFactory(
+                s.GetRequiredService<ILoggerFactory>(),
+                s.GetRequiredService<Func<IHealthNotifier>>()));
 
             services.AddLogging();
 
