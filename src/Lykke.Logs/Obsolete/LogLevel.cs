@@ -5,7 +5,7 @@ namespace Lykke.Logs
     /// <summary>
     /// Specifies log level
     /// </summary>
-    [Obsolete("Use new Lykke logging system")]
+    [Obsolete("Use new Lykke logging system and Microsoft.Extensions.Logging.LogLevel")]
     [Flags]
     public enum LogLevel
     {

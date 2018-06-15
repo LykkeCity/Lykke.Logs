@@ -3,7 +3,7 @@ using System;
 namespace Lykke.Logs
 {
     /// <summary>
-    /// Log entry row key generator abstraction. Used by <see cref="AzureTableLogPersistenceQueue{TLogEntity}"/> to 
+    /// Log entry row key generator abstraction. Used by <see cref="LogPersistenceManager{TLogEntity}"/> to 
     /// generate log entries row key 
     /// </summary>
     /// <typeparam name="TLogEntity">Log entry type</typeparam>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Logs
 {
-    [Obsolete("Use new Lykke logging system")]
+    [Obsolete("Use new Lykke logging system and extensions from the Lykke.Logs.LoggingServiceCollectionExtensions")]
     [PublicAPI]
     public static class LykkeLogToAzureBinder
     {

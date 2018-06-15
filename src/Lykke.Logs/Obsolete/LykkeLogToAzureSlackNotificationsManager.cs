@@ -13,7 +13,7 @@ namespace Lykke.Logs
     /// <summary>
     /// Class for async sending of slack messages from internal queue.
     /// </summary>
-    [Obsolete("Use new Lykke logging system")]
+    [Obsolete("Use new Lykke logging system and Lykke.Logs.Loggers.LykkeSlack.SlackLogBuilderExtensions.AddAdditionalSlackChannel method")]
     [PublicAPI]
     public class LykkeLogToAzureSlackNotificationsManager : ProducerConsumer<LogEntity>, ILykkeLogToAzureSlackNotificationsManager
     {

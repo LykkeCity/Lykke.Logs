@@ -24,6 +24,9 @@ namespace Lykke.Logs
             _healthNotifierProvider = healthNotifierProvider ?? throw new ArgumentNullException(nameof(healthNotifierProvider));
         }
 
+        /// <summary>
+        /// Creates empty log factory
+        /// </summary>
         public static ILogFactory Create()
         {
             return new LogFactory(
@@ -68,6 +71,7 @@ namespace Lykke.Logs
             _loggerFactory.AddProvider(provider);
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             _loggerFactory.Dispose();
