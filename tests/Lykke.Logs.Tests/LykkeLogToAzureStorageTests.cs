@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Lykke.Logs.Tests
 {
     public class LykkeLogToAzureStorageTests
     {
-        private readonly Mock<ILykkeLogToAzureStoragePersistenceManager> _persistenceManagerMock;
-        private readonly Mock<ILykkeLogToAzureSlackNotificationsManager> _slackNotificationsManagerMock;
+        private readonly ILykkeLogToAzureStoragePersistenceManager _persistenceManagerMock;
+        private readonly ILykkeLogToAzureSlackNotificationsManager _slackNotificationsManagerMock;
 
         public LykkeLogToAzureStorageTests()
         {
-            _persistenceManagerMock = new Mock<ILykkeLogToAzureStoragePersistenceManager>();
-            _slackNotificationsManagerMock = new Mock<ILykkeLogToAzureSlackNotificationsManager>();
+            _persistenceManagerMock = Substitute.For<ILykkeLogToAzureStoragePersistenceManager>();
+            _slackNotificationsManagerMock = Substitute.For<ILykkeLogToAzureSlackNotificationsManager>();
         }
 
         [Fact(Skip = "Test is hunds up on TC. Reason is unknown, it seems that TimePeriod is not executed")]
         public void Test_that_batch_is_not_saved_when_lifetime_and_size_is_not_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 100);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 100);
 
             log.Start();
 
@@ -34,7 +34,7 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.IsAny<IReadOnlyCollection<LogEntity>>()), Times.Never);
+            _persistenceManagerMock.DidNotReceiveWithAnyArgs().Persist(null);
 
             log.Dispose();
         }
@@ -43,7 +43,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_saved_when_size_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 10);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock, maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 10);
 
             log.Start();
 
@@ -56,8 +56,8 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count < 10)), Times.Never);
+            _persistenceManagerMock.Received().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10));
+            _persistenceManagerMock.DidNotReceive().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count < 10));
 
             log.Dispose();
         }
@@ -66,7 +66,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_saved_when_lifetime_is_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 100);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 100);
 
             log.Start();
 
@@ -79,8 +79,8 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromSeconds(1.5)).Wait();
 
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 15)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 15)), Times.Never);
+            _persistenceManagerMock.Received().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 15));
+            _persistenceManagerMock.DidNotReceive().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 15));
 
             log.Dispose();
         }
@@ -89,7 +89,7 @@ namespace Lykke.Logs.Tests
         public void Test_that_batch_is_saved_when_lifetime_is_exceeded_and_then_when_size_is_exceeded()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock.Object, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 10);
+            var log = new LykkeLogToAzureStorage("Tests", _persistenceManagerMock, maxBatchLifetime: TimeSpan.FromSeconds(1), batchSizeThreshold: 10);
 
             log.Start();
 
@@ -107,11 +107,11 @@ namespace Lykke.Logs.Tests
             }
 
             Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
-            
+
             // Assert
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 5)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10)), Times.Once);
-            _persistenceManagerMock.Verify(m => m.Persist(It.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count < 10)), Times.Never);
+            _persistenceManagerMock.Received().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count == 5));
+            _persistenceManagerMock.Received().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count >= 10));
+            _persistenceManagerMock.DidNotReceive().Persist(Arg.Is<IReadOnlyCollection<LogEntity>>(e => e.Count != 5 && e.Count < 10));
 
             log.Dispose();
         }
@@ -120,8 +120,8 @@ namespace Lykke.Logs.Tests
         public void Test_that_slack_notifications_is_sent_despite_of_batch_size_and_lifetime()
         {
             // Arrange
-            var log = new LykkeLogToAzureStorage("Tests", 
-                _persistenceManagerMock.Object, _slackNotificationsManagerMock.Object,
+            var log = new LykkeLogToAzureStorage("Tests",
+                _persistenceManagerMock, _slackNotificationsManagerMock,
                 maxBatchLifetime: TimeSpan.FromSeconds(100), batchSizeThreshold: 100);
 
             log.Start();
@@ -135,7 +135,7 @@ namespace Lykke.Logs.Tests
             Task.Delay(TimeSpan.FromSeconds(1.5)).Wait();
 
             // Assert
-            _slackNotificationsManagerMock.Verify(m => m.SendNotification(It.IsAny<LogEntity>()), Times.Exactly(15));
+            _slackNotificationsManagerMock.Received(15).SendNotification(Arg.Any<LogEntity>());
 
             log.Dispose();
         }
