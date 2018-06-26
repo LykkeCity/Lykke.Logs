@@ -30,7 +30,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="11.1.0" />
     <PackageReference Include="Lykke.AzureQueueIntegration" Version="2.2.0" />
     <PackageReference Include="Lykke.AzureStorage" Version="8.6.0" />
-    <PackageReference Include="Lykke.Common" Version="7.0.0" />
+    <PackageReference Include="Lykke.Common" Version="7.0.1" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.5" />
     <PackageReference Include="Lykke.SlackNotifications" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
