@@ -10,6 +10,8 @@ Starting from the version [5.0.0](https://github.com/LykkeCity/Lykke.Logs/releas
 
 ### Common stuff
 
+**TODO**
+
 ## Usage
 
 ### Prerequisites
@@ -38,6 +40,10 @@ return services.BuildServiceProvider<AppSettings>(options =>
         
         logs.Extended = extendedLogs =>
         {
+            extendedLogs.SetMinimumLevel(LogLevel.Trace);
+            extendedLogs.AddFilter("Lykke.MyService", LogLevel.Debug);
+            extendedLogs.AddFilter("Lykke.MyService.MyClass", LogLevel.Error);
+        
             extendedLogs.ConfigureConsole = consoleLogs =>
             {
                 consoleLogs.IncludeScopes = true;
@@ -89,6 +95,12 @@ Required configuration:
 
 Extended configuration:
 
+* Filtering. 
+  * ```extendedLogs.SetMinimumLevel(LogLevel.Trace)``` allows you to set minimal log level for the entire logging system. Default value is ```Information```.
+  * There is a set of ```AddFilter``` method overlods, which you could use to filter out logged entries by component and log level. 
+    * ```extendedLogs.AddFilter("Lykke.MyService", LogLevel.Debug)``` sets minimal log level for all classes in the ```Lykke.MyService``` namespace to the ```Debug``` - all entries below this level will be filtered out.
+    * ```extendedLogs.AddFilter("Lykke.MyService.MyClass", logLevel => logLevel == LogLevel.Critical && logLevel == LogLevel.Debug)``` filters out all log entries except ```Critical``` and ```Debug``` log levels for the ```Lykke.MyService.MyClass``` class and its nesteded classes, if any.
+    * There are another overloads of ```AddFilter``` method, explore them.
 * ```extendedLogs.ConfigureConsole``` allows you to configure Console logger. Avialable options:
   * ```consoleLogs.IncludeScopes``` allows you enable or disable [log scopes](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1&tabs=aspnetcore2x#log-scopes) in the Console logger.
 * ```extendedLogs.ConfigureAzureTable``` **TODO**
@@ -103,7 +115,15 @@ Extended configuration:
 
 #### Custom
 
+**TODO**
+
+### Use configuration file
+
+**TODO**
+
 ### In tests
+
+**TODO**
 
 ### Obtaining ```ILog```
 
@@ -137,4 +157,51 @@ Refer to the [```LogLevel```](https://docs.microsoft.com/en-us/dotnet/api/micros
 
 ### Logging
 
+```ILog``` itself has ```void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) where TState : LogEntryParameters``` method. This is most low level method and you unlikely ever need to use it. One level higher is extension method ```public static void Log(this ILog log, LogLevel logLevel, string callerFilePath, string process, int callerLineNumber, string message, object context, Exception exception, DateTime? moment)``` which is defined in the ``` Lykke.Common.Log.MicrosoftLoggingBasedLogExtensions``` class. This method is inteded to be used only by other extension methods, so you unlikely ever need to use it too.
+
+What you have to use in your app code, is set of extensions methods, defined in the ``` Lykke.Common.Log.MicrosoftLoggingBasedLogExtensions``` class. There are two overloads for each log level - one overload with implicit ```process``` value (where ```process``` parameter has defalt value of ```null```) and one with explicit ```process``` value (where ```process``` parameter has no default value). If overload with implicit ```process``` value is used, then caller method name will be used as the ```process``` value. These method names are:
+
+* ```Trace```
+* ```Debug```
+* ```Info```
+* ```Warning```
+* ```Error```
+* ```Critical```
+
+Either ```message``` or ```exception``` should be specified for each of these methods. Empty or whitespace string message will be treated as absence of the value.
+
+```context``` could be either string or any object. String ```context``` will be passed as is, whilst any other object will be serialized to the ```Json``` using ```Json.Net``` serializer with following serializer settings:
+
+```c#
+new JsonSerializerSettings
+{
+    Formatting = Formatting.Indented,
+    NullValueHandling = NullValueHandling.Include,
+    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+    DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+    Culture = CultureInfo.InvariantCulture
+};
+```
+
+Never specify explicit values for the ```callerFilePath``` and ```callerLineNumber``` they marked with ```CallerFilePath``` and ```CallerLineNumber``` attributes respectively and will be filled by the compiler autmatically.
+
 ### Health monitoring
+
+To notify about app health changing you could inject ```IHealthNotifier``` into constructor of your class, where you need to notify about it. This interface has the only one method ```Notify``` where you could pass message string and optional context object. The message will be published to the Slack ```system-monitoring``` channel and to the ```Information``` level of the log. If you use ```Lykke.Sdk``` health notifier will be used to notify about app start and stop automatically. 
+
+```c#
+public class MyService
+{
+    private readonly IHealthNotifier _healthNotifier;
+    
+    public MyService(IHealthNotifier healthNotifier)
+    {
+        _healthNotifier = healthNotifier;
+    }
+    
+    public void HandleSomethingReallyBad(ReallyBadEvent event)
+    {
+        _helathNotifier.Notify("Something really bad happened with app", event);
+    }
+}
+```
