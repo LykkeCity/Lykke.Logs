@@ -16,7 +16,22 @@ Starting from the version [5.0.0](https://github.com/LykkeCity/Lykke.Logs/releas
 
 ### Prerequisites
 
-* You need to define ```ENV_INFO``` environment variable on your local machine (and on any machine, where your service will run too). It's recommended to define this variable at the OS user level (on your local machine) to spread out this variable across all of the projects. Of course, you could use ```launchsettings.json``` as well, if you wish. It's prefered if you'll specify your Lykke email name as the value. This will help another developers to determine who runs service locally.
+#### ENV_INFO
+You need to define ```ENV_INFO``` environment variable on your local machine (and on any machine, where your service will run too). It's recommended to define this variable at the OS user level (on your local machine) to spread out this variable across all of the projects. Of course, you could use ```launchsettings.json``` as well, if you wish. It's prefered if you'll specify your Lykke email name as the value. This will help another developers to determine who runs service locally. 
+
+For dev, test and prod environments you could specify, if your service is hosted in kubernetes and you don't need any custom name of app instance, you could add following to your ```deployment.yaml```:
+
+```yaml
+spec:
+  template:
+    spec:
+      - name: container-name
+        env:
+        - name: ENV_INFO
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+```
 
 ### Initialization 
 
@@ -159,7 +174,7 @@ Refer to the [```LogLevel```](https://docs.microsoft.com/en-us/dotnet/api/micros
 
 ```ILog``` itself has ```void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter) where TState : LogEntryParameters``` method. This is most low level method and you unlikely ever need to use it. One level higher is extension method ```public static void Log(this ILog log, LogLevel logLevel, string callerFilePath, string process, int callerLineNumber, string message, object context, Exception exception, DateTime? moment)``` which is defined in the ``` Lykke.Common.Log.MicrosoftLoggingBasedLogExtensions``` class. This method is inteded to be used only by other extension methods, so you unlikely ever need to use it too.
 
-What you have to use in your app code, is set of extensions methods, defined in the ``` Lykke.Common.Log.MicrosoftLoggingBasedLogExtensions``` class. There are two overloads for each log level - one overload with implicit ```process``` value (where ```process``` parameter has defalt value of ```null```) and one with explicit ```process``` value (where ```process``` parameter has no default value). If overload with implicit ```process``` value is used, then caller method name will be used as the ```process``` value. These method names are:
+What you have to use in your app code, is set of extension methods, defined in the ``` Lykke.Common.Log.MicrosoftLoggingBasedLogExtensions``` class. There are two overloads for each log level - one overload with implicit ```process``` value (where ```process``` parameter has defalt value of ```null```) and one with explicit ```process``` value (where ```process``` parameter has no default value). If overload with implicit ```process``` value is used, then caller method name will be used as the ```process``` value. These method names are:
 
 * ```Trace```
 * ```Debug```
@@ -168,7 +183,7 @@ What you have to use in your app code, is set of extensions methods, defined in 
 * ```Error```
 * ```Critical```
 
-Either ```message``` or ```exception``` should be specified for each of these methods. Empty or whitespace string message will be treated as absence of the value.
+Either ```message``` or ```exception``` should be specified for each of these methods. Empty or whitespace string message will be treated as absence of the value. Both ```message``` and ```exception``` could be specified for any of the methods.
 
 ```context``` could be either string or any object. String ```context``` will be passed as is, whilst any other object will be serialized to the ```Json``` using ```Json.Net``` serializer with following serializer settings:
 
@@ -184,6 +199,17 @@ new JsonSerializerSettings
 ```
 
 Never specify explicit values for the ```callerFilePath``` and ```callerLineNumber``` they marked with ```CallerFilePath``` and ```CallerLineNumber``` attributes respectively and will be filled by the compiler autmatically.
+
+Examples:
+
+```csharp
+_log.Trace("Some very detailed message");
+_log.Debug("This message could be useful to debug an issue", new { parameterA, PropertyC });
+_log.Info("Very useful process", "The process is beign started", processParameters);
+_log.Warning("Value can't be parsed, skipping", exception, value);
+_log.Error(exception, "Can't proceed processing");
+_log.Critical(exception, "Invalid configuration, app will shutdown");
+```
 
 ### Health monitoring
 
