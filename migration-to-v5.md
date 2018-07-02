@@ -4,7 +4,7 @@ In the version [5.0.0](https://github.com/LykkeCity/Lykke.Logs/releases/tag/5.0.
 
 # Options
 
-When you updates up to the v5.х from the previous versions, you have three options:
+When you updates up to the v5.х from the previous versions, you have two options:
 
 1. Just update nugets and leave your code as-is. In this case you'll see a lot of warnings about obsolete types and their members. If you don't want to migrate to the new logging API, you could just ignore this warnings. You don't need to read this article if you choose this option. But keep in mind, that legacy API will be removed in the next releases.
 3. Update nugets, modify logging system initialization, update obtaining of the ```ILog``` in your classes, switch to the new logging methods everywhere. All these points are described below.
@@ -142,7 +142,7 @@ HealthNotifier = ApplicationContainer.Resolve<IHealthNotifier>();
 
 ## In autofac modules
 
-1. You can't obtain ```ILogFactory``` instance at the DI container configuration time, thus it can't be injecte to the Autofac module.
+1. You can't obtain ```ILogFactory``` instance at the DI container configuration time, thus it can't be injected to the Autofac module.
 2. If some registration depends on log factory instance and needs custom instantiation, use Autofac registration delegate to resolve dependencies only at execution time. Example:
 
 ```c#
@@ -237,7 +237,7 @@ public static class AutofacExtension
 
 1. In versions prior to the v5.x you get used to inject ```ILog``` in the constructors of your classes. In the v5.x you can't inject ```ILog``` and you have to inject ```ILogFactory``` instead.
 2. To write something to the log, you still need ```ILog``` instace, to obtain it call ```ILogFactory.CreateLog(this)``` right in the constructor of your class.
-3. If you need to distinguish instances of the class in the logs, you could use ```CreateLog``` overalod, which accepts ```componentNameSuffix``` parameter.
+3. If you need to distinguish instances of the class in the logs, you could use ```CreateLog``` overload, which accepts ```componentNameSuffix``` parameter.
 4. Always made ```ILog``` field in your classes private. Avoid reusing of the another classes log even of base classes.
 5. Avoid of ```ILog``` instance registration in the DI container to use it everywhere. This is strongly not recommended.
 6. If you need to write something to the ```system-monitoring``` Slack channel, then you need to inject ```IHealthNotifier``` instance to your class.
@@ -288,16 +288,16 @@ new JsonSerializerSettings
 };
 ```
 
-5. Never specify explicit values for the ```callerFilePath``` and ```callerLineNumber``` they marked with ```CallerFilePath``` and ```CallerLineNumber``` attributes respectively and will be filled by the compiler autmatically.
+5. Never specify explicit values for the ```callerFilePath``` and ```callerLineNumber``` they marked with ```CallerFilePath``` and ```CallerLineNumber``` attributes respectively and will be filled by the compiler automatically.
 6. You don't need to pass ```nameof(MyClass)``` as the ```component``` parameter as you did it for the obsolete ```ILog.WriteXXX``` methods. Name of the class, which does write to the log is obtained when you creates ```ILog``` instance via ```ILogFactory```. Thus you need to remove all of these ```nameof(MyClass)``` from the ```ILog.WriteXXX``` calls.
 7. In most cases you don't need to pass ```nameof(MethodName)``` as the ```process``` parameter as you did it for the obsolete ```ILog.WriteXXX``` methods. Name of the method, which does write to the log is obtained automatically, thank's to ```CallerMemberNameAttribute``` (Only, if you using logging method overload, where ```process``` has default value ```null```). Thus you need to remove all these ```nameof(MethodName)``` from the ```ILog.WriteXXX``` calls until you need process name that differs from the containing method name.
 8. Methods mapping:
     * abscent in versions prior to v5.x - ```ILog.Trace```, ```ILog.Debug```
     * ```WriteInfo```/```WriteInfoAsync``` - ```ILog.Info```
-    * ```WriteWarning```/```WriteWarningAsync```. ```ILog.Warning```
-    * ```WriteError```/```WriteErrorAsync```. ```ILog.Error```
-    * ```WriteFatalError```/```WriteFatalErrorAsync```. ```ILog.Critical```
-    * ```WriteMonitor```/```WriteMonitorAsync```. ```IHealthNotifier.Notify```
+    * ```WriteWarning```/```WriteWarningAsync``` - ```ILog.Warning```
+    * ```WriteError```/```WriteErrorAsync``` - ```ILog.Error```
+    * ```WriteFatalError```/```WriteFatalErrorAsync``` - ```ILog.Critical```
+    * ```WriteMonitor```/```WriteMonitorAsync``` - ```IHealthNotifier.Notify```
 
 Examples:
 
