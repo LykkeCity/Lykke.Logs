@@ -76,15 +76,18 @@ services.AddLykkeLogging
 );
 ```
 
-2. Obtain ```ILog``` instance for the ```Startup``` right after DI container building:
+2. Obtain ```ILog``` and ```IHealthNotifier``` instances for the ```Startup``` right after DI container building:
 
 ```c#
 ApplicationContainer = builder.Build();
 
 Log = ApplicationContainer.Resolve<ILogFactory>().CreateLog(this);
+HealthNotifier = ApplicationContainer.Resolve<IHealthNotifier>();
 ```
 
-3. Remove unused ```CreateLogWithSlack``` method.
+3. Replace ```ILog.WriteMonitor```/```ILogWriteMonitoryAsync``` calls with ```HealthNotifier.Notify``` calls. ```component``` and ```process``` parameters should be just removed.
+
+4. Remove unused ```CreateLogWithSlack``` method.
 
 ## Using Lykke.Sdk
 
@@ -237,6 +240,7 @@ public static class AutofacExtension
 3. If you need to distinguish instances of the class in the logs, you could use ```CreateLog``` overalod, which accepts ```componentNameSuffix``` parameter.
 4. Always made ```ILog``` field in your classes private. Avoid reusing of the another classes log even of base classes.
 5. Avoid of ```ILog``` instance registration in the DI container to use it everywhere. This is strongly not recommended.
+6. If you need to write something to the ```system-monitoring``` Slack channel, then you need to inject ```IHealthNotifier``` instance to your class.
 
 Example:
 
@@ -262,6 +266,7 @@ public abstract class TimerPeriod : IStartable, IStopable, ITimerCommand
 # Logging
 
 1. v5.x has different logging levels. Refer to the [```LogLevel```](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.logLevel?view=aspnetcore-2.1) documentation to learn them.
+    1. As you can notice, there is no alternative for ```Monitor``` logging level. It is moved to the sepparate abstraction - ```IHealthNotifier```, so you should use it instead of obsolete ```Monitor``` logging level.
 2. There are two overloads of ```ILog``` extension methods for each log level - one overload with implicit ```process``` value (where ```process``` parameter has defalt value of ```null```) and one with explicit ```process``` value (where ```process``` parameter has no default value). If overload with implicit ```process``` value is used, then caller method name will be used as the ```process``` value. These method names are:
     * ```Trace```
     * ```Debug```
@@ -284,6 +289,15 @@ new JsonSerializerSettings
 ```
 
 5. Never specify explicit values for the ```callerFilePath``` and ```callerLineNumber``` they marked with ```CallerFilePath``` and ```CallerLineNumber``` attributes respectively and will be filled by the compiler autmatically.
+6. You don't need to pass ```nameof(MyClass)``` as the ```component``` parameter as you did it for the obsolete ```ILog.WriteXXX``` methods. Name of the class, which does write to the log is obtained when you creates ```ILog``` instance via ```ILogFactory```. Thus you need to remove all of these ```nameof(MyClass)``` from the ```ILog.WriteXXX``` calls.
+7. In most cases you don't need to pass ```nameof(MethodName)``` as the ```process``` parameter as you did it for the obsolete ```ILog.WriteXXX``` methods. Name of the method, which does write to the log is obtained automatically, thank's to ```CallerMemberNameAttribute``` (Only, if you using logging method overload, where ```process``` has default value ```null```). Thus you need to remove all these ```nameof(MethodName)``` from the ```ILog.WriteXXX``` calls until you need process name that differs from the containing method name.
+8. Methods mapping:
+    * abscent in versions prior to v5.x - ```ILog.Trace```, ```ILog.Debug```
+    * ```WriteInfo```/```WriteInfoAsync``` - ```ILog.Info```
+    * ```WriteWarning```/```WriteWarningAsync```. ```ILog.Warning```
+    * ```WriteError```/```WriteErrorAsync```. ```ILog.Error```
+    * ```WriteFatalError```/```WriteFatalErrorAsync```. ```ILog.Critical```
+    * ```WriteMonitor```/```WriteMonitorAsync```. ```IHealthNotifier.Notify```
 
 Examples:
 
@@ -294,4 +308,5 @@ _log.Info("Very useful process", "The process is beign started", processParamete
 _log.Warning("Value can't be parsed, skipping", exception, value);
 _log.Error(exception, "Can't proceed processing");
 _log.Critical(exception, "Invalid configuration, app will shutdown");
+_healthNotifier.Notify("Application has been started");
 ```
