@@ -76,7 +76,7 @@ namespace Lykke.Logs
             builder
                 .AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning)
                 .AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning)
-                .AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", Microsoft.Extensions.Logging.LogLevel.Error);;
+                .AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", Microsoft.Extensions.Logging.LogLevel.Error);
 
             configure?.Invoke(builder);
 
