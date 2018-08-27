@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Common;
 using JetBrains.Annotations;
 using Lykke.AzureQueueIntegration;
 using Lykke.AzureQueueIntegration.Publisher;
@@ -26,25 +27,43 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             var senders = new Dictionary<Microsoft.Extensions.Logging.LogLevel, ISlackNotificationsSender>();
             var serializer = new SlackNotificationsSerializer();
 
-            foreach (var level in LogLevels.All)
+            var initLogsTasks = LogLevels.All.SelectAsync(p =>
+                InitSender(p, serializer, azureQueueConnectionString, azureQueuesBaseName));
+
+            Task.WhenAll(initLogsTasks);
+
+            foreach (var levelSenderTuple in initLogsTasks.Result)
             {
-                var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
-                        LogFactory.LastResort,
-                        serializer,
-                        $"Slack log [{level}]",
-                        new AzureQueueSettings
-                        {
-                            ConnectionString = azureQueueConnectionString,
-                            QueueName = $"{azureQueuesBaseName}-{level}"
-                        })
-                    .Start();
-
-                var sender = new SlackNotificationsSender(azureQueuePublisher, ownQueue: true);
-
-                senders.Add(level, sender);
+                senders.Add(levelSenderTuple.logLevel, levelSenderTuple.sender);
             }
 
             _senders = new ReadOnlyDictionary<Microsoft.Extensions.Logging.LogLevel, ISlackNotificationsSender>(senders);
+        }
+
+        private async Task<(Microsoft.Extensions.Logging.LogLevel logLevel, ISlackNotificationsSender sender)> InitSender(
+            Microsoft.Extensions.Logging.LogLevel level,
+            SlackNotificationsSerializer serializer,
+            [NotNull] string azureQueueConnectionString,
+            [NotNull] string azureQueuesBaseName)
+        {
+            return await Task.Run(() =>
+            {
+                var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
+                    LogFactory.LastResort,
+                    serializer,
+                    $"Slack log [{level}]",
+                    new AzureQueueSettings
+                    {
+                        ConnectionString = azureQueueConnectionString,
+                        QueueName = $"{azureQueuesBaseName}-{level}"
+                    }, 
+                    fireNForgetQueueExistenceCheck: true)
+                 .Start();
+
+                var sender = new SlackNotificationsSender(azureQueuePublisher, ownQueue: true);
+
+                return (level, sender);
+            });
         }
 
         public Task SendAsync(Microsoft.Extensions.Logging.LogLevel level, DateTime moment, string channel, string sender, string message)
