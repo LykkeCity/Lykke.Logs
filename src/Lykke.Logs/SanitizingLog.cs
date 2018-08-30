@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace Lykke.Logs
 {
     /// <summary>
-    /// ILog decorator for sanitizing log data.
+    /// <see cref="ILog" /> decorator for sanitizing log data (removing sensitive data like keys, passwords, etc.).
     /// </summary>
     public class SanitizingLog : ILog
     {
