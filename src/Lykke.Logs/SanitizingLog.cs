@@ -53,7 +53,15 @@ namespace Lykke.Logs
 
         void ILog.Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            var sanitizedException = exception as SanitizingException ?? new SanitizingException(exception, Sanitize);
+            var sanitizedException = 
+                exception is SanitizingException ? exception : 
+                exception != null ? new SanitizingException(exception, Sanitize) :
+                null;
+
+            var sanitizedFormatter = formatter != null ?
+                new Func<LogEntryParameters, Exception, string>((s, e) => Sanitize(formatter(state, exception))) :
+                null;
+
             var sanitizedState = new LogEntryParameters(
                 state.AppName,
                 state.AppVersion,
@@ -65,8 +73,7 @@ namespace Lykke.Logs
                 Sanitize(state.Context),
                 state.Moment);
 
-            _log.Log(logLevel, eventId, sanitizedState, sanitizedException,
-                (s, e) => Sanitize(formatter(state, exception)));
+            _log.Log(logLevel, eventId, sanitizedState, sanitizedException, sanitizedFormatter);
         }
 
         Task ILog.WriteErrorAsync(string component, string process, string context, Exception exception, DateTime? dateTime)

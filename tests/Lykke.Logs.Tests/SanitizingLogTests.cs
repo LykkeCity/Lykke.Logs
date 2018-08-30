@@ -16,19 +16,22 @@ namespace Lykke.Logs.Tests
     public class SanitizingLogTests
     {
         private IConsole _console;
-        private ILog _log;
+        private SanitizingLog _log;
 
         public SanitizingLogTests()
         {
             _console = Substitute.For<IConsole>();
-            _log = new SanitizingLog(new Log(new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), new ConsoleLogMessageWriter(_console)).CreateLogger("Test"), Substitute.For<IHealthNotifier>()))
-                .AddSensitivePattern(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"");
+            _log = new SanitizingLog(new Log(
+                    new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), new ConsoleLogMessageWriter(_console)).CreateLogger("Test"),
+                    Substitute.For<IHealthNotifier>()));
         }
 
         [Fact]
         public void ShouldSanitizeLog()
         {
             // Arrange
+
+            _log.AddSensitivePattern(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"");
 
             var secret = "qwertyuiop";
             var patternedString = $"\"privateKey\": \"{secret}\"";
@@ -69,6 +72,33 @@ namespace Lykke.Logs.Tests
 
             Assert.NotEmpty(writeMethodCalls);
             Assert.DoesNotContain(writeMethodCalls, 
+                c => c.GetArguments().OfType<string>().Any(a => a.Contains(secret)));
+        }
+
+        [Fact]
+        public void ShouldSanitizeAllPatterns()
+        {
+            // Arrange
+
+            _log
+                .AddSensitivePattern(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"")
+                .AddSensitivePattern(new Regex(@"""password"": ""(.*)"""), "\"password\": \"*\"");
+
+            var secret = "qwertyuiop";
+            var patternedString = $"\"privateKey\": \"{secret}\", \"password\": \"{secret}\"";
+            var patternedObject = new { privateKey = secret, password = secret };
+
+            // Act
+
+            _log.Info(patternedString, patternedObject);
+
+            // Assert
+
+            var writeMethodCalls = _console.ReceivedCalls()
+                .Where(c => c.GetMethodInfo().Name.StartsWith("Write"));
+
+            Assert.NotEmpty(writeMethodCalls);
+            Assert.DoesNotContain(writeMethodCalls,
                 c => c.GetArguments().OfType<string>().Any(a => a.Contains(secret)));
         }
     }
