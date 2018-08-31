@@ -7,39 +7,26 @@ using Common.Log;
 using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
 
-namespace Lykke.Logs
+namespace Lykke.Logs.Loggers.LykkeSanitizing
 {
-    /// <summary>
-    /// <see cref="ILog" /> decorator for sanitizing log data (removing sensitive data like keys, passwords, etc.).
-    /// </summary>
-    public class SanitizingLog : ILog
+    internal sealed class SanitizingLog : ISanitizingLog
     {
         private readonly ILog _log;
-        private readonly List<(Regex pattern, string replacement)> _patterns = new List<(Regex, string)>();
+        private readonly SanitizingOptions _options;
 
-        /// <summary>
-        /// Initializes new instance.
-        /// </summary>
-        /// <param name="log">Original log instance.</param>
-        public SanitizingLog(ILog log) => this._log = log ?? throw new System.ArgumentNullException(nameof(log));
-
-        /// <summary>
-        /// Adds sensitive pattern that should not be logged. Api keys, private keys and so on.
-        /// </summary>
-        /// <param name="pattern">Regex that should be replaced.</param>
-        /// <param name="replacement">Pattern replacement.</param>
-        public SanitizingLog AddSensitivePattern(Regex pattern, string replacement)
+        public SanitizingLog(ILog log, SanitizingOptions options = null)
         {
-            _patterns.Add((pattern, replacement));
+            _log = log ?? throw new System.ArgumentNullException(nameof(log));
+            _options = options ?? new SanitizingOptions();
+        }
+
+        public ISanitizingLog AddSanitizingFilter(Regex pattern, string replacement)
+        {
+            _options.Filters.Add(new SanitizingFilter(pattern, replacement));
             return this;
         }
 
-        /// <summary>
-        /// Replaces all patterns provided through <see cref="AddSensitivePattern(Regex, string)" /> with corresponding values.
-        /// </summary>
-        /// <param name="value">String to sanitize.</param>
-        /// <returns></returns>
-        public string Sanitize(string value) => _patterns.Aggregate(value, (a, p) => p.pattern.Replace(a, p.replacement));
+        public string Sanitize(string value) => _options.Filters.Aggregate(value, (a, p) => p.Pattern.Replace(a, p.Replacement));
 
         IDisposable ILog.BeginScope(string scopeMessage)
         {
