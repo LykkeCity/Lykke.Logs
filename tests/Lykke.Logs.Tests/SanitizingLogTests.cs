@@ -6,24 +6,27 @@ using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSanitizing;
 using NSubstitute;
 using Xunit;
 using IConsole = Microsoft.Extensions.Logging.Console.Internal.IConsole;
 using Level = Microsoft.Extensions.Logging.LogLevel;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using NSubstitute.ClearExtensions;
 
 namespace Lykke.Logs.Tests
 {
     public class SanitizingLogTests
     {
         private IConsole _console;
-        private SanitizingLog _log;
+        private ISanitizingLog _log;
 
         public SanitizingLogTests()
         {
             _console = Substitute.For<IConsole>();
-            _log = new SanitizingLog(new Log(
-                    new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), new ConsoleLogMessageWriter(_console)).CreateLogger("Test"),
-                    Substitute.For<IHealthNotifier>()));
+            _log = new Log(new LykkeConsoleLoggerProvider(new ConsoleLoggerOptions(), new ConsoleLogMessageWriter(_console)).CreateLogger("Test"), Substitute.For<IHealthNotifier>())
+                .Sanitize();
         }
 
         [Fact]
@@ -31,7 +34,7 @@ namespace Lykke.Logs.Tests
         {
             // Arrange
 
-            _log.AddSensitivePattern(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"");
+            _log.AddSanitizingFilter(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"");
 
             var secret = "qwertyuiop";
             var patternedString = $"\"privateKey\": \"{secret}\"";
@@ -81,8 +84,8 @@ namespace Lykke.Logs.Tests
             // Arrange
 
             _log
-                .AddSensitivePattern(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"")
-                .AddSensitivePattern(new Regex(@"""password"": ""(.*)"""), "\"password\": \"*\"");
+                .AddSanitizingFilter(new Regex(@"""privateKey"": ""(.*)"""), "\"privateKey\": \"*\"")
+                .AddSanitizingFilter(new Regex(@"""password"": ""(.*)"""), "\"password\": \"*\"");
 
             var secret = "qwertyuiop";
             var patternedString = $"\"privateKey\": \"{secret}\", \"password\": \"{secret}\"";
@@ -100,6 +103,28 @@ namespace Lykke.Logs.Tests
             Assert.NotEmpty(writeMethodCalls);
             Assert.DoesNotContain(writeMethodCalls,
                 c => c.GetArguments().OfType<string>().Any(a => a.Contains(secret)));
+        }
+
+        [Fact]
+        public void ShouldConfigureOptions()
+        {
+            // Arrange
+
+            var serviceCollection = new ServiceCollection();
+
+            // Act
+
+            serviceCollection.Configure<SanitizingOptions>(x => x.Filters.Add(new SanitizingFilter(new Regex(""), "*")));
+            serviceCollection.Configure<SanitizingOptions>(x => x.Filters.Add(new SanitizingFilter(new Regex(""), "#")));
+
+            // Assert
+
+            var options = serviceCollection.BuildServiceProvider().GetService<IOptions<SanitizingOptions>>();
+
+            Assert.NotNull(options.Value);
+            Assert.Equal(2, options.Value.Filters.Count);
+            Assert.Contains(options.Value.Filters, f => f.Replacement == "*");
+            Assert.Contains(options.Value.Filters, f => f.Replacement == "#");
         }
     }
 }

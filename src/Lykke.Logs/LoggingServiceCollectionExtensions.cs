@@ -4,10 +4,12 @@ using Lykke.Common;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeAzureTable;
 using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSanitizing;
 using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lykke.Logs
 {
@@ -67,7 +69,8 @@ namespace Lykke.Logs
 
             services.AddSingleton<ILogFactory, LogFactory>(s => new LogFactory(
                 s.GetRequiredService<ILoggerFactory>(),
-                s.GetRequiredService<Func<IHealthNotifier>>()));
+                s.GetRequiredService<Func<IHealthNotifier>>(),
+                s.GetService<IOptions<SanitizingOptions>>()));
 
             services.AddLogging();
 

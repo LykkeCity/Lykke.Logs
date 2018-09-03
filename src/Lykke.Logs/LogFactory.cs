@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSanitizing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Lykke.Logs
 {
@@ -17,11 +21,13 @@ namespace Lykke.Logs
 
         private readonly ILoggerFactory _loggerFactory;
         private readonly Func<IHealthNotifier> _healthNotifierProvider;
+        private readonly SanitizingOptions _sanitizingOptions;
 
-        internal LogFactory(ILoggerFactory loggerFactory, Func<IHealthNotifier> healthNotifierProvider)
+        internal LogFactory(ILoggerFactory loggerFactory, Func<IHealthNotifier> healthNotifierProvider, IOptions<SanitizingOptions> sanitizingOptions = null)
         {
             _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             _healthNotifierProvider = healthNotifierProvider ?? throw new ArgumentNullException(nameof(healthNotifierProvider));
+            _sanitizingOptions = sanitizingOptions?.Value ?? new SanitizingOptions();
         }
 
         /// <summary>
@@ -46,7 +52,11 @@ namespace Lykke.Logs
                 throw new ArgumentException("Should be not empty string", nameof(componentNameSuffix));
             }
 
-            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Invoke());
+            ILog log = new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component, componentNameSuffix)), _healthNotifierProvider.Invoke());
+
+            return _sanitizingOptions.Filters.Any()
+                ? new SanitizingLog(log, _sanitizingOptions)
+                : log;
         }
 
         /// <inheritdoc />
@@ -57,7 +67,11 @@ namespace Lykke.Logs
                 throw new ArgumentNullException(nameof(component));
             }
 
-            return new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Invoke());
+            ILog log = new Log(_loggerFactory.CreateLogger(ComponentNameHelper.GetComponentName(component)), _healthNotifierProvider.Invoke());
+
+            return _sanitizingOptions.Filters.Any()
+                ? new SanitizingLog(log, _sanitizingOptions)
+                : log;
         }
 
         /// <inheritdoc />
