@@ -26,7 +26,12 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
             return this;
         }
 
-        public string Sanitize(string value) => _options.Filters.Aggregate(value, (a, p) => p.Pattern.Replace(a, p.Replacement));
+        public string Sanitize(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? value
+                : _options.Filters.Aggregate(value, (a, p) => p.Pattern.Replace(a, p.Replacement));
+        }
 
         IDisposable ILog.BeginScope(string scopeMessage)
         {

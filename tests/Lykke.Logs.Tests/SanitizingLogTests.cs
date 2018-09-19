@@ -12,6 +12,7 @@ using Xunit;
 using IConsole = Microsoft.Extensions.Logging.Console.Internal.IConsole;
 using Level = Microsoft.Extensions.Logging.LogLevel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute.ClearExtensions;
 
@@ -125,6 +126,35 @@ namespace Lykke.Logs.Tests
             Assert.Equal(2, options.Value.Filters.Count);
             Assert.Contains(options.Value.Filters, f => f.Replacement == "*");
             Assert.Contains(options.Value.Filters, f => f.Replacement == "#");
+        }
+
+        [Fact]
+        public void Sanitize_ValueIsNullWithoutFilters_NotThrowException()
+        {
+            // Arrange
+            var fakeLog = Substitute.For<ILog>();
+            var sanitizer = new SanitizingLog(fakeLog, new SanitizingOptions());
+
+            // Act
+            var result = sanitizer.Sanitize(null);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void Sanitize_ValueIsNullWithFilters_NotThrowException()
+        {
+            // Arrange
+            var fakeLog = Substitute.For<ILog>();
+            var sanitizer = new SanitizingLog(fakeLog, new SanitizingOptions());
+            sanitizer.AddSanitizingFilter(new Regex(""), "");
+
+            // Act
+            var result = sanitizer.Sanitize(null);
+
+            // Assert
+            Assert.Null(result);
         }
     }
 }
