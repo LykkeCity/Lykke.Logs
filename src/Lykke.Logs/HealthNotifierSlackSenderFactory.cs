@@ -36,27 +36,5 @@ namespace Lykke.Logs
 
             return new SlackNotificationsSender(azureQueuePublisher, ownQueue: true);
         }
-
-        /// <inheritdoc />
-        public ISlackNotificationsSender CreateForCustomChannel(string azureQueueConnectionString, string azureQueueForCustomChannel)
-        {
-            if (string.IsNullOrWhiteSpace(azureQueueConnectionString))
-                throw new ArgumentNullException(nameof(azureQueueConnectionString));
-            if (string.IsNullOrWhiteSpace(azureQueueForCustomChannel))
-                throw new ArgumentNullException(nameof(azureQueueForCustomChannel));
-
-            var azureQueuePublisher = new AzureQueuePublisher<SlackMessageQueueEntity>(
-                    LogFactory.LastResort,
-                    new SlackNotificationsSerializer(),
-                    "Health notifier for custom slack channel",
-                    new AzureQueueSettings
-                    {
-                        ConnectionString = azureQueueConnectionString,
-                        QueueName = azureQueueForCustomChannel
-                    })
-                .Start();
-
-            return new SlackNotificationsSender(azureQueuePublisher, ownQueue: true);
-        }
     }
 }

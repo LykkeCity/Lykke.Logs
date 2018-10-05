@@ -24,7 +24,7 @@ namespace Lykke.Logs
         [NotNull] private readonly string _appVersion;
         [NotNull] private readonly string _envInfo;
         [NotNull] private readonly ISlackNotificationsSender _slackSender;
-        [NotNull] private readonly Dictionary<string, ISlackNotificationsSender> _customSlackSenders = new Dictionary<string, ISlackNotificationsSender>();
+        [NotNull] private readonly HashSet<string> _customChannels = new HashSet<string>();
 
         private ILog _log;
 
@@ -84,7 +84,7 @@ namespace Lykke.Logs
             }
 
             var tasks = new List<Task> { _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender) };
-            tasks.AddRange(_customSlackSenders.Select(p => p.Value.SendAsync(p.Key, sender, messageBuilder.ToString())));
+            tasks.AddRange(_customChannels.Select(c => _slackSender.SendAsync(c, sender, messageBuilder.ToString())));
 
             Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -94,16 +94,14 @@ namespace Lykke.Logs
         public void Dispose()
         {
             (_slackSender as IDisposable)?.Dispose();
-
-            foreach (var slackSender in _customSlackSenders.Values)
-            {
-                (slackSender as IDisposable)?.Dispose();
-            }
         }
 
-        internal void AddCustomSlackSender(string channel, ISlackNotificationsSender slackSender)
+        internal void AddCustomSlackSender(string channel)
         {
-            _customSlackSenders[channel] = slackSender ?? throw new ArgumentNullException();
+            if (channel == null)
+                throw new ArgumentNullException();
+
+            _customChannels.Add(channel);
         }
     }
 }

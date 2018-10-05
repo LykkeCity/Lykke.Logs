@@ -76,14 +76,10 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             {
                 var generalOptions = s.GetRequiredService<GeneralSlackLoggerOptions>();
 
-                if (options.IncludeHealthNotifications)
+                if (options.AreHealthNotificationsIncluded)
                 {
                     var healthNotifier = (HealthNotifier)s.GetRequiredService<IHealthNotifier>();
-                    healthNotifier.AddCustomSlackSender(
-                        channel,
-                        new HealthNotifierSlackSenderFactory().CreateForCustomChannel(
-                            generalOptions.ConnectionString,
-                            generalOptions.BaseQueuesName));
+                    healthNotifier.AddCustomSlackSender(channel);
                 }
 
                 return new SlackLoggerProvider(

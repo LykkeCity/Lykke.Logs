@@ -17,7 +17,12 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         /// <summary>
         /// Flag that toggles adding messages from <see cref="IHealthNotifier " /> to custom slack channel.
         /// </summary>
-        public bool IncludeHealthNotifications { get; set; }
+        public bool AreHealthNotificationsIncluded { get; private set; }
+
+        public void IncludeHealthNotifications()
+        {
+            AreHealthNotificationsIncluded = true;
+        }
 
         internal AdditionalSlackLoggerOptions([NotNull] ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel> spamGuard) : 
             base(spamGuard)
