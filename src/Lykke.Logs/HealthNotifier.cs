@@ -83,8 +83,9 @@ namespace Lykke.Logs
                 messageBuilder.Append(LogContextConversion.ConvertToString(context));
             }
 
-            var tasks = new List<Task> { _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender) };
-            tasks.AddRange(_customChannels.Select(c => _slackSender.SendAsync(c, sender, messageBuilder.ToString())));
+            var message = messageBuilder.ToString();
+            var tasks = new List<Task> { _slackSender.SendMonitorAsync(message, sender) };
+            tasks.AddRange(_customChannels.Select(c => _slackSender.SendAsync(c, sender, message)));
 
             Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
 
@@ -98,7 +99,7 @@ namespace Lykke.Logs
 
         internal void AddCustomSlackSender(string channel)
         {
-            if (channel == null)
+            if (string.IsNullOrWhiteSpace(channel))
                 throw new ArgumentNullException();
 
             _customChannels.Add(channel);
