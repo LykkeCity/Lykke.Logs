@@ -14,7 +14,7 @@ namespace Lykke.Logs
         /// </summary>
         /// <param name="azureQueueConnectionString">Azure storage connection string, where the slack notifications queue is</param>
         /// <param name="azureQueuesBaseName">Slack notifications queues base name</param>
-        /// <returns></returns>
+        /// <returns>ISlackNotificationsSender instance.</returns>
         [NotNull]
         ISlackNotificationsSender Create(
             [NotNull] string azureQueueConnectionString,

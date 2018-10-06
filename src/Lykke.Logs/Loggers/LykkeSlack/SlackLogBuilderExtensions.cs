@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
+using Lykke.Common.Log;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -74,6 +75,12 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             builder.Services.AddSingleton<ILoggerProvider, SlackLoggerProvider>(s =>
             {
                 var generalOptions = s.GetRequiredService<GeneralSlackLoggerOptions>();
+
+                if (options.AreHealthNotificationsIncluded)
+                {
+                    var healthNotifier = (HealthNotifier)s.GetRequiredService<IHealthNotifier>();
+                    healthNotifier.AddCustomSlackSender(channel);
+                }
 
                 return new SlackLoggerProvider(
                     generalOptions.ConnectionString,

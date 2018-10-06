@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common;
@@ -21,6 +24,7 @@ namespace Lykke.Logs
         [NotNull] private readonly string _appVersion;
         [NotNull] private readonly string _envInfo;
         [NotNull] private readonly ISlackNotificationsSender _slackSender;
+        [NotNull] private readonly HashSet<string> _customChannels = new HashSet<string>();
 
         private ILog _log;
 
@@ -79,8 +83,11 @@ namespace Lykke.Logs
                 messageBuilder.Append(LogContextConversion.ConvertToString(context));
             }
 
-            // TODO: Actually there is no IO, so ISlackNotificationsSender should be refactored to be synchronous
-            _slackSender.SendMonitorAsync(messageBuilder.ToString(), sender).ConfigureAwait(false).GetAwaiter().GetResult();
+            var message = messageBuilder.ToString();
+            var tasks = new List<Task> { _slackSender.SendMonitorAsync(message, sender) };
+            tasks.AddRange(_customChannels.Select(c => _slackSender.SendAsync(c, sender, message)));
+
+            Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
 
             Log.Info(healthMessage, context);
         }
@@ -88,6 +95,14 @@ namespace Lykke.Logs
         public void Dispose()
         {
             (_slackSender as IDisposable)?.Dispose();
+        }
+
+        internal void AddCustomSlackSender(string channel)
+        {
+            if (string.IsNullOrWhiteSpace(channel))
+                throw new ArgumentNullException();
+
+            _customChannels.Add(channel);
         }
     }
 }
