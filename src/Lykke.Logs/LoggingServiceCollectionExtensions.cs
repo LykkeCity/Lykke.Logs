@@ -60,9 +60,7 @@ namespace Lykke.Logs
                 var slackSenderFactory = new HealthNotifierSlackSenderFactory();
 
                 return new HealthNotifier(
-                    s.GetRequiredService<ILogFactory>(),
-                    slackSenderFactory
-                        .Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName));
+                    slackSenderFactory.Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName));
             });
 
             services.AddSingleton<Func<IHealthNotifier>>(s => s.GetRequiredService<IHealthNotifier>);
