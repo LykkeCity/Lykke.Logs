@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.Log;
@@ -17,31 +16,22 @@ namespace Lykke.Logs
     [PublicAPI]
     public sealed class HealthNotifier : IHealthNotifier
     {
-        private ILog Log => _log ?? (_log = _logFactory.CreateLog(this));
-
-        [NotNull] private readonly ILogFactory _logFactory;
         [NotNull] private readonly string _appName;
         [NotNull] private readonly string _appVersion;
         [NotNull] private readonly string _envInfo;
         [NotNull] private readonly ISlackNotificationsSender _slackSender;
         [NotNull] private readonly HashSet<string> _customChannels = new HashSet<string>();
 
-        private ILog _log;
-
         /// <summary>
         /// Creates lykke health notifier for the specific app
         /// </summary>
-        /// <param name="logFactory">Log factory</param>
         /// <param name="slackSender">Slack sender factory</param>
-        internal HealthNotifier(
-            [NotNull] ILogFactory logFactory,
-            [NotNull] ISlackNotificationsSender slackSender)
+        internal HealthNotifier([NotNull] ISlackNotificationsSender slackSender)
 
             : this(
                   AppEnvironment.Name, 
                   AppEnvironment.Version, 
                   AppEnvironment.EnvInfo, 
-                  logFactory, 
                   slackSender)
         {
         }
@@ -52,19 +42,16 @@ namespace Lykke.Logs
         /// <param name="appName">Name of the app</param>
         /// <param name="appVersion">Version of the app</param>
         /// <param name="envInfo">ENV_INFO environment variable of the app</param>
-        /// <param name="logFactory">Log factory</param>
         /// <param name="slackSender">Slack sender</param>
         public HealthNotifier(
             [NotNull] string appName, 
             [NotNull] string appVersion, 
             [NotNull] string envInfo,
-            [NotNull] ILogFactory logFactory, 
             [NotNull] ISlackNotificationsSender slackSender)
         {
             _appName = appName ?? throw new ArgumentNullException(nameof(appName));
             _appVersion = appVersion ?? throw new ArgumentNullException(nameof(appVersion));
             _envInfo = envInfo ?? throw new ArgumentNullException(nameof(envInfo));
-            _logFactory = logFactory ?? throw new ArgumentNullException(nameof(logFactory));
             _slackSender = slackSender ?? throw new ArgumentNullException(nameof(slackSender));
         }
 
@@ -88,8 +75,6 @@ namespace Lykke.Logs
             tasks.AddRange(_customChannels.Select(c => _slackSender.SendAsync(c, sender, message)));
 
             Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
-
-            Log.Info(healthMessage, context);
         }
 
         public void Dispose()
