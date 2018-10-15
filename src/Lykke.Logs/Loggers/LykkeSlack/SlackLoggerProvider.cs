@@ -13,18 +13,22 @@ namespace Lykke.Logs.Loggers.LykkeSlack
 
         [NotNull] private readonly ConcurrentDictionary<string, ILogger> _loggers;
         [NotNull] private readonly ISlackLogEntriesSender _sender;
+        private readonly bool _filterOutChaosException;
 
-        public SlackLoggerProvider(
+        internal SlackLoggerProvider(
             [NotNull] string azureQueueConnectionString,
             [NotNull] string azureQueuesBaseName,
             [NotNull] ISpamGuard<Microsoft.Extensions.Logging.LogLevel> spamGuard,
-            [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver)
+            [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver,
+            bool filterOutChaosException)
         {
             _spamGuard = spamGuard ?? throw new ArgumentNullException(nameof(spamGuard));
             _channelResolver = channelResolver ?? throw new ArgumentNullException(nameof(channelResolver));
 
             _loggers = new ConcurrentDictionary<string, ILogger>();
             _sender = new SlackLogEntriesSender(azureQueueConnectionString, azureQueuesBaseName);
+
+            _filterOutChaosException = filterOutChaosException;
         }
 
         public ILogger CreateLogger(string componentName)
@@ -36,7 +40,11 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         {
             return new SpamGuardingLoggerDecorator(
                 componentName,
-                new SlackLogger(_sender, componentName, _channelResolver),
+                new SlackLogger(
+                    _sender,
+                    componentName,
+                    _channelResolver,
+                    _filterOutChaosException),
                 _spamGuard);
         }
 

@@ -9,10 +9,20 @@ namespace Lykke.Logs.Loggers.LykkeSlack
     [PublicAPI]
     public class SlackLoggerOptions
     {
-        /// <summary>
-        /// Spam guard configuration
-        /// </summary>
+        internal bool IsChaosExceptionFilteringEnabled { get; private set; }
+
+        /// <summary>Spam guard configuration</summary>
         public ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel> SpamGuard { get; }
+
+        public SlackLoggerOptions()
+        {
+            IsChaosExceptionFilteringEnabled = true;
+        }
+
+        public void DisableChaosExceptionFiltering()
+        {
+            IsChaosExceptionFilteringEnabled = false;
+        }
 
         internal SlackLoggerOptions([NotNull] ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel> spamGuard)
         {
