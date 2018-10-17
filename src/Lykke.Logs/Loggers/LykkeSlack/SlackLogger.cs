@@ -2,6 +2,7 @@
 using System.Text;
 using AsyncFriendlyStackTrace;
 using JetBrains.Annotations;
+using Lykke.Common.Chaos;
 using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions.Internal;
@@ -13,24 +14,33 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         private readonly string _componentName;
         private readonly Func<Microsoft.Extensions.Logging.LogLevel, string> _channelResolver;
         private readonly ISlackLogEntriesSender _sender;
+        private readonly bool _filterOutChaosException;
 
-        public SlackLogger(
+        internal SlackLogger(
             [NotNull] ISlackLogEntriesSender sender,
             [NotNull] string componentName,
-            [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver)
+            [NotNull] Func<Microsoft.Extensions.Logging.LogLevel, string> channelResolver,
+            bool filterOutChaosException)
         {
             _componentName = componentName ?? throw new ArgumentNullException(componentName);
             _sender = sender ?? throw new ArgumentNullException(nameof(sender));
             _channelResolver = channelResolver ?? throw new ArgumentNullException(nameof(channelResolver));
+            _filterOutChaosException = filterOutChaosException;
         }
 
-        public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(
+            Microsoft.Extensions.Logging.LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception exception,
+            Func<TState, Exception, string> formatter)
         {
             var channel = _channelResolver(logLevel);
             if (channel == null)
-            {
                 return;
-            }
+
+            if (_filterOutChaosException && exception?.GetType() == typeof(ChaosException))
+                return;
 
             var parameters = state as LogEntryParameters ?? new ExternalLogEntryPerameters();
 

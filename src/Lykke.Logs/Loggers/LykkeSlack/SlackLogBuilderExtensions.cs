@@ -42,7 +42,8 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 azureQueueConnectionString,
                 azureQueuesBaseName,
                 spamGuard,
-                SlackChannelResolvers.EssentialChannelsResolver));
+                SlackChannelResolvers.EssentialChannelsResolver,
+                options.FilterOutChaosException));
 
             return builder;
         }
@@ -69,6 +70,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
 
             var spamGuard = SlackSpamGuardBuilder.BuildForAdditionalSlackChannel();
             var options = new AdditionalSlackLoggerOptions(spamGuard);
+            options.DisableChaosExceptionFiltering();
 
             configure?.Invoke(options);
 
@@ -86,7 +88,8 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                     generalOptions.ConnectionString,
                     generalOptions.BaseQueuesName,
                     spamGuard,
-                    SlackChannelResolvers.GetAdditionalChannelResolver(options.MinLogLevel, channel));
+                    SlackChannelResolvers.GetAdditionalChannelResolver(options.MinLogLevel, channel),
+                    options.FilterOutChaosException);
             });
 
             return builder;
