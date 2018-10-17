@@ -39,7 +39,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             if (channel == null)
                 return;
 
-            if (_filterOutChaosException && exception.GetType() == typeof(ChaosException))
+            if (_filterOutChaosException && exception?.GetType() == typeof(ChaosException))
                 return;
 
             var parameters = state as LogEntryParameters ?? new ExternalLogEntryPerameters();
