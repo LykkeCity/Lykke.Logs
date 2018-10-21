@@ -87,8 +87,10 @@ namespace Lykke.Logs.Loggers.LykkeSlack
             if (!string.IsNullOrWhiteSpace(parameters.Context))
             {
                 if (sb.Length > 0)
+                {
                     sb.AppendLine();
-                sb.Append("Context: ");
+                }
+
                 sb.Append(parameters.Context);
             }
 
