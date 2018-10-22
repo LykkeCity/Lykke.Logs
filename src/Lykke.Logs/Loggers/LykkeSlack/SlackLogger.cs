@@ -120,6 +120,9 @@ namespace Lykke.Logs.Loggers.LykkeSlack
                 sb.Append($" : {_componentName}");
             }
 
+            if (!string.IsNullOrWhiteSpace(parameters.Process))
+                sb.Append($" : {parameters.Process}");
+
             return sb.ToString();
         }
 
