@@ -27,6 +27,7 @@ namespace Lykke.Logs.Loggers.LykkeSlack
         internal SlackLoggerOptions([NotNull] ISpamGuardConfiguration<Microsoft.Extensions.Logging.LogLevel> spamGuard)
         {
             SpamGuard = spamGuard ?? throw new ArgumentNullException(nameof(spamGuard));
+            FilterOutChaosException = true;
         }
     }
 }
