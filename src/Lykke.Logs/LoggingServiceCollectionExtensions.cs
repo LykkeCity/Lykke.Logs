@@ -74,10 +74,7 @@ namespace Lykke.Logs
 
             var builder = new LogBuilder(services);
 
-            builder
-                .AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning)
-                .AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning)
-                .AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", Microsoft.Extensions.Logging.LogLevel.Error);
+            builder.AddWellKnownFilters();
 
             configure?.Invoke(builder);
 
@@ -106,6 +103,48 @@ namespace Lykke.Logs
             services.AddSingleton<ILogFactory>(s => EmptyLogFactory.Instance);
 
             return services;
+        }
+
+        /// <summary>
+        /// Adds console Lykke logging services to the specified <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" />.
+        /// </summary>
+        /// <param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param>
+        /// <param name="configure">The <see cref="T:Microsoft.Extensions.Logging.ILogBuilder" /> configuration delegate.</param>
+        /// <returns>The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> so that additional calls can be chained.</returns>
+        [NotNull]
+        public static IServiceCollection AddConsoleLykkeLogging([NotNull] this IServiceCollection services, [CanBeNull] Action<ILogBuilder> configure = null)
+        {
+            if (services == null)
+            {
+                throw new ArgumentNullException(nameof(services));
+            }
+
+            services.AddSingleton<IHealthNotifier>(s => EmptyHealthNotifier.Instance);
+
+            services.AddSingleton<ILogFactory, LogFactory>(s => new LogFactory(
+                s.GetRequiredService<ILoggerFactory>(),
+                () => EmptyHealthNotifier.Instance,
+                s.GetService<IOptions<SanitizingOptions>>()));
+
+            services.AddLogging();
+
+            var builder = new LogBuilder(services);
+
+            builder.AddWellKnownFilters();
+
+            configure?.Invoke(builder);
+
+            builder.AddConsole(builder.ConfigureConsole);
+
+            return services;
+        }
+
+        private static void AddWellKnownFilters(this LogBuilder builder)
+        {
+            builder
+                .AddFilter("System", Microsoft.Extensions.Logging.LogLevel.Warning)
+                .AddFilter("Microsoft", Microsoft.Extensions.Logging.LogLevel.Warning)
+                .AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", Microsoft.Extensions.Logging.LogLevel.Error);
         }
     }
 }
