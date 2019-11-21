@@ -45,8 +45,8 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
 
         void ILog.Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            var sanitizedException = 
-                exception is SanitizingException ? exception : 
+            var sanitizedException =
+                exception is SanitizingException ? exception :
                 exception != null ? new SanitizingException(exception, Sanitize) :
                 null;
 
