@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 
 namespace Lykke.Logs.Loggers.LykkeSanitizing
 {
@@ -16,5 +17,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
         public override string Message => _sanitizer(_exception.Message);
         public override string Source => _sanitizer(_exception.Source);
         public override string ToString() => _sanitizer(_exception.ToString());
+        public override string StackTrace => _exception.StackTrace;
+        public override IDictionary Data => _exception.Data;
     }
 }
