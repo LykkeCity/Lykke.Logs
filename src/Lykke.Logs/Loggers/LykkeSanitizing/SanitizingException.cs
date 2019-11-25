@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Diagnostics;
+using AsyncFriendlyStackTrace;
 
 namespace Lykke.Logs.Loggers.LykkeSanitizing
 {
@@ -7,11 +9,16 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
     {
         private readonly Exception _exception;
         private readonly Func<string, string> _sanitizer;
+        
+        private const string AsyncStackTraceExceptionData = "AsyncFriendlyStackTrace";
 
         public SanitizingException(Exception exception, Func<string, string> sanitizer)
         {
             _exception = exception ?? throw new ArgumentNullException(nameof(exception));
             _sanitizer = sanitizer ?? throw new ArgumentNullException(nameof(sanitizer));
+            
+            // add stack trace to be retrieved by AsyncFriendlyStackTrace later
+            this.Data.Add(AsyncStackTraceExceptionData, new StackTrace(exception, true).ToAsyncString());
         }
 
         public override string Message => _sanitizer(_exception.Message);
