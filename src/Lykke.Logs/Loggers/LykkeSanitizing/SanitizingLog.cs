@@ -47,7 +47,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
         {
             var sanitizedException =
                 exception is SanitizingException ? exception :
-                exception != null ? new SanitizingException(exception, Sanitize) :
+                exception != null ? new SanitizingException(exception, Sanitize).AddAsyncFriendlyStackTrace() :
                 null;
 
             var sanitizedFormatter = formatter != null ?
@@ -74,7 +74,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
                 Sanitize(component),
                 Sanitize(process), 
                 Sanitize(context), 
-                new SanitizingException(exception, Sanitize),
+                new SanitizingException(exception, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
 
@@ -83,7 +83,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
             return _log.WriteErrorAsync(
                 Sanitize(process),
                 Sanitize(context),
-                new SanitizingException(exception, Sanitize),
+                new SanitizingException(exception, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
 
@@ -93,7 +93,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
                 Sanitize(component),
                 Sanitize(process),
                 Sanitize(context),
-                new SanitizingException(exception, Sanitize),
+                new SanitizingException(exception, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
 
@@ -102,7 +102,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
             return _log.WriteFatalErrorAsync(
                 Sanitize(process),
                 Sanitize(context),
-                new SanitizingException(exception, Sanitize),
+                new SanitizingException(exception, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
 
@@ -161,7 +161,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
                 Sanitize(process),
                 Sanitize(context),
                 Sanitize(info),
-                new SanitizingException(ex, Sanitize),
+                new SanitizingException(ex, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
 
@@ -180,7 +180,7 @@ namespace Lykke.Logs.Loggers.LykkeSanitizing
                 Sanitize(process),
                 Sanitize(context),
                 Sanitize(info),
-                new SanitizingException(ex, Sanitize),
+                new SanitizingException(ex, Sanitize).AddAsyncFriendlyStackTrace(),
                 dateTime);
         }
     }
