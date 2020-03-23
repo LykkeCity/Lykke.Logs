@@ -119,10 +119,11 @@ namespace Lykke.Logs.Tests
             // Assert
 
             var options = serviceCollection.BuildServiceProvider().GetService<IOptions<SanitizingOptions>>();
-            var configureOptions = serviceCollection.BuildServiceProvider().GetService<IConfigureOptions<SanitizingOptions>>();
 
-            Assert.Null(options);
-            Assert.NotNull(configureOptions);
+            Assert.NotNull(options.Value);
+            Assert.Equal(2, options.Value.Filters.Count);
+            Assert.Contains(options.Value.Filters, f => f.Replacement == "*");
+            Assert.Contains(options.Value.Filters, f => f.Replacement == "#");
         }
 
         [Fact]
