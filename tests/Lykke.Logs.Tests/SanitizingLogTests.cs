@@ -7,14 +7,12 @@ using Common.Log;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
 using Lykke.Logs.Loggers.LykkeSanitizing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
-using IConsole = Microsoft.Extensions.Logging.Console.Internal.IConsole;
+using IConsole = Lykke.Logs.Loggers.LykkeConsole.IConsole;
 using Level = Microsoft.Extensions.Logging.LogLevel;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using NSubstitute.ClearExtensions;
 
 namespace Lykke.Logs.Tests
 {
@@ -121,11 +119,10 @@ namespace Lykke.Logs.Tests
             // Assert
 
             var options = serviceCollection.BuildServiceProvider().GetService<IOptions<SanitizingOptions>>();
+            var configureOptions = serviceCollection.BuildServiceProvider().GetService<IConfigureOptions<SanitizingOptions>>();
 
-            Assert.NotNull(options.Value);
-            Assert.Equal(2, options.Value.Filters.Count);
-            Assert.Contains(options.Value.Filters, f => f.Replacement == "*");
-            Assert.Contains(options.Value.Filters, f => f.Replacement == "#");
+            Assert.Null(options);
+            Assert.NotNull(configureOptions);
         }
 
         [Fact]

@@ -3,7 +3,6 @@ using System.Threading;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console.Internal;
 using NSubstitute;
 using Xunit;
 

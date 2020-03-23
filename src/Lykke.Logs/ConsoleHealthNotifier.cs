@@ -3,7 +3,6 @@ using System.Text;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Lykke.Logs.Loggers.LykkeConsole;
-using Microsoft.Extensions.Logging.Console.Internal;
 
 namespace Lykke.Logs
 {
