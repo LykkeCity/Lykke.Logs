@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using AsyncFriendlyStackTrace;
-using Microsoft.Extensions.Logging.Console.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeConsole
 {

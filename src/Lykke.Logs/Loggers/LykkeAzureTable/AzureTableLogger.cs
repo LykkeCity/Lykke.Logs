@@ -3,7 +3,6 @@ using AsyncFriendlyStackTrace;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeAzureTable
 {

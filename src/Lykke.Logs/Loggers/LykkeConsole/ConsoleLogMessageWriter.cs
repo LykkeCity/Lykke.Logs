@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using Microsoft.Extensions.Logging.Console.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeConsole
 {

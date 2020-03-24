@@ -2,7 +2,6 @@
 using AsyncFriendlyStackTrace;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions.Internal;
 
 namespace Lykke.Logs
 {
@@ -33,7 +32,7 @@ namespace Lykke.Logs
                 }
             }
         }
-        
+
         public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel)
         {
             try

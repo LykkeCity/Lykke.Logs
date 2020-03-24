@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.Extensions.Logging.Console.Internal;
 
 namespace Lykke.Logs.Loggers.LykkeConsole
 {
